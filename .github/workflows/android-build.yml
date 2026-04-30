@@ -35,13 +35,26 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install --no-audit --no-fund
+          echo "--- installed Capacitor:"
+          npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
       - name: Build web bundle
         run: npm run build
 
-      - name: Capacitor sync (Android)
-        run: npx --yes cap sync android --verbose
+      - name: Copy web bundle into Android assets
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/. android/app/src/main/assets/public/
+          echo "--- assets staged:"
+          ls -la android/app/src/main/assets/public | head -20
+
+      - name: Capacitor copy + update (Android)
+        run: |
+          npx cap copy android
+          npx cap update android
 
       - name: Make gradlew executable
         working-directory: android
