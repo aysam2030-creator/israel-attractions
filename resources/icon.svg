@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="55%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="pin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="220" fill="url(#glow)"/>
+
+  <!-- Map pin -->
+  <g transform="translate(512 540)">
+    <path d="M 0 -260 C -150 -260 -260 -150 -260 0 C -260 180 0 360 0 360 C 0 360 260 180 260 0 C 260 -150 150 -260 0 -260 Z"
+          fill="url(#pin)" stroke="rgba(0,0,0,0.15)" stroke-width="6"/>
+    <!-- Star of David inside -->
+    <g transform="translate(0 -20)" fill="#a855f7">
+      <polygon points="0,-100 86.6,50 -86.6,50"/>
+      <polygon points="0,100 86.6,-50 -86.6,-50"/>
+    </g>
+  </g>
+</svg>
