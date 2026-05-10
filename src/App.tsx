@@ -19,15 +19,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache for map marker icons to prevent unnecessary re-renders in react-leaflet
+// By reusing the same L.divIcon reference, react-leaflet won't destroy and recreate the DOM nodes
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
-  const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
-    className: "custom-pin",
-    html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 34],
-    popupAnchor: [0, -32],
-  });
+  const key = `${color}-${isTrip}-${step ?? 'none'}`;
+  let icon = pinCache.get(key);
+  if (!icon) {
+    const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
+    icon = L.divIcon({
+      className: "custom-pin",
+      html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 34],
+      popupAnchor: [0, -32],
+    });
+    pinCache.set(key, icon);
+  }
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
