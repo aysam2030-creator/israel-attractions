@@ -122,9 +122,21 @@ export default function Chat({ lang, tripIds, onOpenAttraction, onImportTrip }: 
     [messages, activeGroupId]
   );
 
+  // ⚡ Bolt Optimization: O(1) hash map lookup for messages to prevent O(N^2) render performance issues
+  const messagesMap = useMemo(
+    () => Object.fromEntries(messages.map((m) => [m.id, m])),
+    [messages]
+  );
+
   const searchResults = useMemo(
     () => (searchQuery ? searchMessages(groupMessages, searchQuery) : []),
     [groupMessages, searchQuery]
+  );
+
+  // ⚡ Bolt Optimization: O(1) Set lookup for highlighted messages during render
+  const searchResultIds = useMemo(
+    () => new Set(searchResults.map((s) => s.id)),
+    [searchResults]
   );
 
   // Mark as read on group change
@@ -195,7 +207,7 @@ export default function Chat({ lang, tripIds, onOpenAttraction, onImportTrip }: 
             : m
         )
       );
-      const edited = messages.find((m) => m.id === editingId);
+      const edited = messagesMap[editingId];
       if (edited) pushRemote({ ...edited, kind: { type: "text", text }, editedAt: Date.now() });
       setEditingId(null);
       setDraft("");
@@ -340,7 +352,7 @@ export default function Chat({ lang, tripIds, onOpenAttraction, onImportTrip }: 
     setMessages((c) =>
       c.map((m) => (m.id === id ? { ...m, deleted: true, kind: { type: "text", text: "" } } : m))
     );
-    const m = messages.find((x) => x.id === id);
+    const m = messagesMap[id];
     if (m) pushRemote({ ...m, deleted: true });
   };
 
@@ -514,8 +526,8 @@ export default function Chat({ lang, tripIds, onOpenAttraction, onImportTrip }: 
                 const m = item.m;
                 const u = userMap[m.userId];
                 const isMe = m.userId === me;
-                const isHighlighted = searchQuery && searchResults.some((s) => s.id === m.id);
-                const replied = m.replyTo ? messages.find((x) => x.id === m.replyTo) : null;
+                const isHighlighted = searchQuery && searchResultIds.has(m.id);
+                const replied = m.replyTo ? messagesMap[m.replyTo] : null;
                 return (
                   <ChatBubble
                     key={item.key}
