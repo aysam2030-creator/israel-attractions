@@ -1,0 +1,3 @@
+## 2024-05-24 - React-Leaflet Marker Thrashing & Filter Optimization
+**Learning:** Returning a new `L.divIcon` instance from a helper function (`makePin`) on every render causes React-Leaflet's `Marker` component to detect a prop change, tearing down and recreating the underlying DOM node (DOM thrashing). Additionally, doing heavy string concatenations inside a `useMemo` filter loop that runs on every keystroke causes significant frame drops.
+**Action:** Always cache/memoize Leaflet Icon instances outside the component or in a robust cache (`Map`) keyed by their parameters. Precompute search index strings outside of rendering/filtering loops, ideally when data is initially loaded.

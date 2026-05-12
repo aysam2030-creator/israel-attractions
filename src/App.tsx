@@ -19,15 +19,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const searchCache = new WeakMap<object, string>();
+
+const pinCache = new Map<string, L.DivIcon>();
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -167,7 +175,12 @@ export default function App() {
       if (freeOnly && !a.freeEntry) return false;
       if (openNow && !isOpenNow(a.hours.en)) return false;
       if (q) {
-        const hay = `${a.name.en} ${a.name.he} ${a.name.ar} ${a.city.en} ${a.city.he} ${a.city.ar} ${a.description.en} ${a.description.he} ${a.description.ar}`.toLowerCase();
+        // use pre-calculated hay string for performance
+        let hay = searchCache.get(a);
+        if (!hay) {
+          hay = `${a.name.en} ${a.name.he} ${a.name.ar} ${a.city.en} ${a.city.he} ${a.city.ar} ${a.description.en} ${a.description.he} ${a.description.ar}`.toLowerCase();
+          searchCache.set(a, hay);
+        }
         if (!hay.includes(q)) return false;
       }
       return true;
