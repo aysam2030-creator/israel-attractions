@@ -89,6 +89,9 @@ jobs:
           echo "--- config:"
           cat android/app/src/main/assets/capacitor.config.json
 
+      - name: Update Capacitor plugins
+        run: npx cap update android
+
       - name: Make gradlew executable
         working-directory: android
         run: chmod +x ./gradlew
