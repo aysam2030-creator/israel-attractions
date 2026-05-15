@@ -19,15 +19,28 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.DivIcon instances to prevent recreating DOM nodes on every render.
+// This significantly reduces DOM thrashing when selecting markers or changing tabs.
+// Expected impact: Eliminates MapContainer re-renders for unchanged markers.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const cacheKey = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(cacheKey)) {
+    return pinCache.get(cacheKey)!;
+  }
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+
+  pinCache.set(cacheKey, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -41,6 +54,11 @@ const REGION_COLORS: Record<Region, string> = {
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
+
+// ⚡ Bolt: Hoisted static objects to prevent React-Leaflet from interpreting them
+// as new props on every render, which causes severe DOM thrashing.
+const MAP_CENTER: [number, number] = [31.5, 34.9];
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const CAT_EMOJI: Record<Category, string> = {
   nature: "🌿", history: "🏛️", religious: "✡️", beach: "🏖️",
@@ -525,7 +543,7 @@ export default function App() {
           </aside>
 
           <main className="map-wrap">
-            <MapContainer center={[31.5, 34.9]} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
+            <MapContainer center={MAP_CENTER} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -553,7 +571,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
