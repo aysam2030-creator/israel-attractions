@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Set up JDK 17
@@ -88,6 +88,9 @@ jobs:
           ls -la android/app/src/main/assets/public | head -10
           echo "--- config:"
           cat android/app/src/main/assets/capacitor.config.json
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Make gradlew executable
         working-directory: android

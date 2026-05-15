@@ -19,6 +19,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.DivIcon instances to prevent recreating DOM nodes on every render.
+// This significantly reduces DOM thrashing when selecting markers or changing tabs.
+// Expected impact: Eliminates MapContainer re-renders for unchanged markers.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -52,6 +55,8 @@ const REGION_COLORS: Record<Region, string> = {
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
 
+// ⚡ Bolt: Hoisted static objects to prevent React-Leaflet from interpreting them
+// as new props on every render, which causes severe DOM thrashing.
 const MAP_CENTER: [number, number] = [31.5, 34.9];
 const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
