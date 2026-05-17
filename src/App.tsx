@@ -19,15 +19,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step}`;
+  if (pinCache.has(key)) {
+    return pinCache.get(key)!;
+  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -38,6 +46,9 @@ const REGION_COLORS: Record<Region, string> = {
   deadsea: "#60a5fa",
   south: "#f472b6",
 };
+
+const MAP_CENTER: [number, number] = [31.5, 34.9];
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
@@ -274,7 +285,10 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  const tripPath: [number, number][] = useMemo(
+    () => tripAttractions.map((a) => [a.lat, a.lng]),
+    [tripAttractions]
+  );
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -525,35 +539,26 @@ export default function App() {
           </aside>
 
           <main className="map-wrap">
-            <MapContainer center={[31.5, 34.9]} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
+            <MapContainer center={MAP_CENTER} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <AttractionMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  tripIds={tripIds}
+                  tab={tab}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
@@ -645,6 +650,32 @@ interface CardProps {
   stepNum?: number;
   onMove?: (d: -1 | 1) => void;
 }
+const AttractionMarker = React.memo(({ a, lang, tripIds, tab, setSelected }: {
+  a: Attraction;
+  lang: Lang;
+  tripIds: string[];
+  tab: Tab;
+  setSelected: (a: Attraction) => void;
+}) => {
+  const eventHandlers = useMemo(() => ({ click: () => setSelected(a) }), [a, setSelected]);
+  const icon = makePin(
+    REGION_COLORS[a.region],
+    tripIds.includes(a.id),
+    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
+  );
+
+  return (
+    <Marker position={[a.lat, a.lng]} icon={icon} eventHandlers={eventHandlers}>
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
+
 function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
