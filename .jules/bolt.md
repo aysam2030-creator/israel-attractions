@@ -1,0 +1,3 @@
+## 2024-05-18 - Unstable Object References in Leaflet Properties Cause DOM Thrashing
+**Learning:** In this Vite + React project using `react-leaflet`, passing inline object references for Leaflet properties (like `L.divIcon` options, or polyline `pathOptions`) directly in JSX leads to severe performance bottlenecks. Leaflet interprets new object references as a need to completely tear down and recreate the associated DOM elements, causing extreme DOM thrashing upon component re-renders.
+**Action:** Always cache or memoize Leaflet properties (such as icon functions, options objects, and static paths) to maintain stable object references across renders when working with `react-leaflet`.
