@@ -1,0 +1,3 @@
+## 2024-05-19 - React-Leaflet Stable Object References
+**Learning:** In react-leaflet, passing unstable object references (like dynamically created icons with `L.divIcon` or inline path options/position arrays) as props to components like `Marker` or `Polyline` can lead to unnecessary re-renders and DOM thrashing. This is a severe performance bottleneck, especially when dealing with multiple map markers or route updates.
+**Action:** Always cache or memoize Leaflet properties (like `L.divIcon`, path coordinates, and `options` objects) to maintain stable object references across renders in React-Leaflet component trees.

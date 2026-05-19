@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -654,7 +654,7 @@ interface CardProps {
   stepNum?: number;
   onMove?: (d: -1 | 1) => void;
 }
-function AttractionCard({
+const AttractionCard = memo(function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
   return (
@@ -695,4 +695,4 @@ function AttractionCard({
       </div>
     </div>
   );
-}
+});
