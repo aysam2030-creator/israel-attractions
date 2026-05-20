@@ -1,0 +1,3 @@
+## 2024-05-20 - react-leaflet DOM Thrashing
+**Learning:** `react-leaflet` can cause severe performance bottlenecks (DOM thrashing) if Leaflet properties like `L.divIcon`, polyline paths (arrays), and `pathOptions` objects are recreated on every render. Because React triggers a re-render when object references change, react-leaflet removes and adds DOM elements continually if these references aren't stable.
+**Action:** Always cache `L.divIcon` objects (e.g., with a Map or useMemo), memoize path arrays, and define static options objects outside the component or with useMemo when working with react-leaflet.
