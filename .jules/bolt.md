@@ -1,0 +1,3 @@
+## 2024-06-25 - React-Leaflet DOM Thrashing via Unstable Prop References
+**Learning:** In this project, React-Leaflet components (`Marker`, `Polyline`) are highly sensitive to unstable object references. Creating new instances of Leaflet objects (like `L.divIcon`) or passing inline objects (like `pathOptions={{...}}`) directly into render methods causes React-Leaflet to destroy and recreate the underlying DOM elements on every render, leading to severe DOM thrashing and noticeable map jank during state updates.
+**Action:** Always cache or memoize Leaflet properties (e.g. `L.divIcon` instances, coordinate arrays, and configuration objects) to maintain stable object references across renders and prevent unnecessary recreation of map elements.
