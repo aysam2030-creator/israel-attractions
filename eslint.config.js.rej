@@ -1,0 +1,9 @@
+--- eslint.config.js
++++ eslint.config.js
+@@ -10,6 +10,7 @@
+ export default tseslint.config(
+   { ignores: ['dist'] },
++  { ignores: ['android/**'] },
+   {
+     extends: [js.configs.recommended, ...tseslint.configs.recommended],
+     files: ['**/*.{ts,tsx}'],
