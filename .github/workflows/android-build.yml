@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --no-audit --no-fund
-          npx cap sync android
+          npx cap update android
           echo "--- installed Capacitor:"
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
