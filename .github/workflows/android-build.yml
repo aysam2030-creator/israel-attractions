@@ -47,7 +47,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --no-audit --no-fund
-          npx cap update android
           echo "--- installed Capacitor:"
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
@@ -57,6 +56,7 @@ jobs:
       - name: Stage web bundle into Android assets
         run: |
           set -e
+          npx cap update android
           rm -rf android/app/src/main/assets/public
           mkdir -p android/app/src/main/assets/public
           cp -r dist/. android/app/src/main/assets/public/
