@@ -19,15 +19,24 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache Leaflet icons to prevent severe DOM thrashing on re-renders
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const cacheKey = `${color}-${isTrip}-${step}`;
+  if (pinCache.has(cacheKey)) {
+    return pinCache.get(cacheKey)!;
+  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(cacheKey, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -41,6 +50,9 @@ const REGION_COLORS: Record<Region, string> = {
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
+
+// ⚡ Bolt: Extract pathOptions to keep object reference stable and avoid re-renders
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const CAT_EMOJI: Record<Category, string> = {
   nature: "🌿", history: "🏛️", religious: "✡️", beach: "🏖️",
@@ -274,7 +286,8 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  // ⚡ Bolt: Memoize trip path array to prevent unnecessary Polyline updates
+  const tripPath = useMemo<[number, number][]>(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -553,7 +566,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
