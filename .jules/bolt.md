@@ -1,0 +1,3 @@
+## 2024-05-27 - [react-leaflet Performance with Stable References]
+**Learning:** In `react-leaflet`, passing dynamically created objects (like `L.divIcon`, array paths for `Polyline`, or option objects like `pathOptions`) as props to mapping components causes severe DOM thrashing and unnecessary re-renders. Every new reference triggers leaflet to remove and re-add DOM elements for map layers.
+**Action:** Always memoize arrays (e.g. coordinates using `useMemo`), extract static option objects (like `pathOptions`) outside the component, and cache dynamically instantiated Leaflet classes (like `L.divIcon` using a `Map` based on arguments) to maintain stable references across React renders.
