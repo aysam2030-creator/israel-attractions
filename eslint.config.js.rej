@@ -1,0 +1,11 @@
+--- eslint.config.js
++++ eslint.config.js
+@@ -10,7 +10,7 @@
+     languageOptions: {
+       globals: globals.browser,
+     },
+-    ignores: ["dist", "android", "ios", "capacitor.config.ts"],
++    ignores: ["dist", "android/**", "ios/**", "capacitor.config.ts", ".github/**"],
+   },
+   pluginJs.configs.recommended,
+   ...tseslint.configs.recommended,
