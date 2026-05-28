@@ -104,8 +104,6 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   return out.filter((d) => d.length > 0);
 }
 
-const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
-
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
     const s = localStorage.getItem("lang") as Lang | null;
@@ -563,7 +561,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={TRIP_PATH_OPTIONS}
+                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
                 />
               )}
               <FlyTo target={flyTarget} />
