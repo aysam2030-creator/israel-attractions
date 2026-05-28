@@ -50,12 +50,12 @@ jobs:
           echo "--- installed Capacitor:"
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
+      - name: Build web bundle
+        run: npm run build
+
       - name: Sync Capacitor
         run: |
           npx cap sync android
-
-      - name: Build web bundle
-        run: npm run build
 
       - name: Stage web bundle into Android assets
         run: |
