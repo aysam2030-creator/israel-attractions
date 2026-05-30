@@ -19,15 +19,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt Optimization: Cache Leaflet divIcon objects to prevent DOM thrashing
+// and unnecessary re-creations when react-leaflet markers re-render.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
-  const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
-    className: "custom-pin",
-    html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 34],
-    popupAnchor: [0, -32],
-  });
+  const cacheKey = `${color}-${isTrip}-${step ?? "none"}`;
+  let icon = pinCache.get(cacheKey);
+  if (!icon) {
+    const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
+    icon = L.divIcon({
+      className: "custom-pin",
+      html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 34],
+      popupAnchor: [0, -32],
+    });
+    pinCache.set(cacheKey, icon);
+  }
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -38,6 +48,10 @@ const REGION_COLORS: Record<Region, string> = {
   deadsea: "#60a5fa",
   south: "#f472b6",
 };
+
+// ⚡ Bolt Optimization: Extract static object out of component to prevent
+// <Polyline> from re-rendering due to unstable pathOptions reference.
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
@@ -274,7 +288,10 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+
+  // ⚡ Bolt Optimization: Memoize path array to maintain referential equality
+  // and prevent <Polyline> from unnecessarily re-rendering.
+  const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -553,7 +570,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
