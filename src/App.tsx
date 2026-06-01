@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,24 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache Leaflet icons to prevent recreation and DOM thrashing on re-renders
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const cacheKey = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(cacheKey)) {
+    return pinCache.get(cacheKey)!;
+  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(cacheKey, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -46,6 +55,8 @@ const CAT_EMOJI: Record<Category, string> = {
   nature: "🌿", history: "🏛️", religious: "✡️", beach: "🏖️",
   city: "🌆", museum: "🎨", family: "👨‍👩‍👧",
 };
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
+
 const REGION_EMOJI: Record<Region, string> = {
   north: "⛰️", center: "🏙️", jerusalem: "🕍",
   south: "🏜️", deadsea: "🧂", coast: "🌊",
@@ -58,6 +69,34 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   }, [target, map]);
   return null;
 }
+
+// ⚡ Bolt: Memoize Marker to prevent re-rendering all pins when map state (like selected item) changes
+const AttractionMarker = memo(function AttractionMarker({
+  a,
+  lang,
+  icon,
+  onSelect
+}: {
+  a: Attraction;
+  lang: Lang;
+  icon: L.DivIcon;
+  onSelect: (a: Attraction) => void;
+}) {
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={icon}
+      eventHandlers={{ click: () => onSelect(a) }}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 type Tab = "explore" | "trip" | "chat";
 
@@ -222,10 +261,15 @@ export default function App() {
     return () => { cancelled = true; };
   }, [tripAttractions]);
 
-  const onPick = (a: Attraction) => {
+  const onPick = useCallback((a: Attraction) => {
     setSelected(a);
     setFlyTarget([a.lat, a.lng]);
-  };
+  }, []);
+
+  // ⚡ Bolt: Stable callback for memoized markers
+  const handleMarkerClick = useCallback((a: Attraction) => {
+    setSelected(a);
+  }, []);
 
   const toggleTrip = (id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
@@ -274,7 +318,8 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  // ⚡ Bolt: Memoize polyline path to avoid re-calculating on every render
+  const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -532,28 +577,22 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <AttractionMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
+                  a={a}
+                  lang={lang}
                   icon={makePin(
                     REGION_COLORS[a.region],
                     tripIds.includes(a.id),
                     tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
                   )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  onSelect={handleMarkerClick}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
