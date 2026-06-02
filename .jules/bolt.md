@@ -1,0 +1,3 @@
+## 2024-06-02 - React-Leaflet Component Object Stability
+**Learning:** Leaflet objects (like `L.divIcon` used in custom markers, and pathOptions passed to `Polyline`) and simple array/object props in components like `MapContainer` trigger extensive underlying Leaflet DOM recreations or internal react-leaflet re-renders when their references change on every render (DOM thrashing). Creating them inline without memoization or caching is a massive performance bottleneck.
+**Action:** Always cache or memoize instances of `L.divIcon`, path options objects (e.g. `POLYLINE_OPTIONS`), array coords (e.g. `DEFAULT_CENTER`, `tripPath`), or other complex objects when passing them to react-leaflet components.
