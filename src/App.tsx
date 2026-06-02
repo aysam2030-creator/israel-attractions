@@ -19,6 +19,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon instances based on visual parameters.
+// Recreating Leaflet icons on every render breaks referential equality checks in react-leaflet,
+// causing expensive DOM thrashing as markers are destroyed and rebuilt.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -51,6 +54,9 @@ const REGION_COLORS: Record<Region, string> = {
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
 
+// ⚡ Bolt: Extract static map configuration objects out of the component.
+// Using inline objects or arrays (like center=[x,y] or pathOptions={...}) in react-leaflet
+// components forces them to re-render constantly because their references change on every cycle.
 const DEFAULT_CENTER: [number, number] = [31.5, 34.9];
 const POLYLINE_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
@@ -286,6 +292,10 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
+
+  // ⚡ Bolt: Memoize the derived polyline coordinates.
+  // This ensures the Polyline component receives a stable array reference, preventing
+  // it from unnecessarily unmounting/remounting its underlying Leaflet paths on every render.
   const tripPath: [number, number][] = useMemo(
     () => tripAttractions.map((a) => [a.lat, a.lng]),
     [tripAttractions]
