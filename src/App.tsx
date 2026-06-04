@@ -19,6 +19,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.DivIcon instances to maintain stable object references.
+// Why: React-Leaflet tears down and recreates DOM elements if the icon reference changes on every render.
+// Impact: Significantly reduces DOM thrashing and map re-renders.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -48,6 +51,8 @@ const REGION_COLORS: Record<Region, string> = {
 };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
+// ⚡ Bolt: Extracted constant to avoid inline object creation during render
+// Why: Prevents React-Leaflet from interpreting a new pathOptions object as a reason to rebuild the Polyline.
 const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
 
@@ -283,6 +288,8 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
+  // ⚡ Bolt: Memoize array to maintain stable reference
+  // Why: Mapping directly in render creates a new array every time, triggering Polyline re-renders.
   const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
