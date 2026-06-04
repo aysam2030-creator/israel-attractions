@@ -1,0 +1,6 @@
+## 2024-06-04 - React-Leaflet DOM Thrashing from Unstable References
+**Learning:** In react-leaflet, passing inline objects (like `pathOptions={{ color: 'red' }}`) or recreating Leaflet objects on every render (like `L.divIcon()` in `makePin`) causes severe DOM thrashing and performance bottlenecks, as Leaflet interprets new object references as entirely new entities and tears down/rebuilds the underlying DOM elements on every React render.
+**Action:** Always cache/memoize Leaflet properties (like `L.divIcon`, polyline paths, and options objects) using global caches (`Map`), constants outside the component, or `useMemo` hooks to maintain stable object references across renders.
+## 2024-06-04 - Capacitor Android Build Failure (cordova.variables.gradle)
+**Learning:** When building Android apps using Capacitor in CI, if you see the error `Could not read script '.../cordova.variables.gradle' as it does not exist`, it's because the build step is missing `npx cap sync android` (or `update`). This command generates necessary Cordova variables and plugin files in the `android/` directory before building.
+**Action:** Always ensure `npx cap sync android` is run before `./gradlew assembleDebug` or `./gradlew assembleRelease` in CI workflows. Also ensure Node.js is at least v22 for capacitor v8.
