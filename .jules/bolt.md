@@ -1,0 +1,3 @@
+## 2024-06-04 - React-Leaflet DOM Thrashing from Unstable References
+**Learning:** In react-leaflet, passing inline objects (like `pathOptions={{ color: 'red' }}`) or recreating Leaflet objects on every render (like `L.divIcon()` in `makePin`) causes severe DOM thrashing and performance bottlenecks, as Leaflet interprets new object references as entirely new entities and tears down/rebuilds the underlying DOM elements on every React render.
+**Action:** Always cache/memoize Leaflet properties (like `L.divIcon`, polyline paths, and options objects) using global caches (`Map`), constants outside the component, or `useMemo` hooks to maintain stable object references across renders.
