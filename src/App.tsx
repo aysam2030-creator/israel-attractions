@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -95,6 +95,40 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   list.forEach((a, i) => out[Math.floor(i / perDay)].push(a));
   return out.filter((d) => d.length > 0);
 }
+
+// ⚡ Bolt Optimization: Extracted static path options to prevent Polyline re-renders
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
+
+
+interface MapMarkerProps {
+  a: Attraction;
+  lang: Lang;
+  color: string;
+  isTrip: boolean;
+  stepNum?: number;
+  setSelected: (a: Attraction) => void;
+}
+
+// ⚡ Bolt Optimization: Extracted MapMarker and wrapped in React.memo()
+// Impact: Prevents react-leaflet from destroying and recreating marker DOM nodes
+// on every parent re-render (e.g. typing in search), reducing main thread blocking time.
+const MapMarker = memo(function MapMarker({ a, lang, color, isTrip, stepNum, setSelected }: MapMarkerProps) {
+  // Memoize Leaflet props to maintain stable references
+  const position = useMemo(() => [a.lat, a.lng] as [number, number], [a.lat, a.lng]);
+  const icon = useMemo(() => makePin(color, isTrip, stepNum), [color, isTrip, stepNum]);
+  const eventHandlers = useMemo(() => ({ click: () => setSelected(a) }), [a, setSelected]);
+
+  return (
+    <Marker position={position} icon={icon} eventHandlers={eventHandlers}>
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -274,7 +308,7 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng] as [number, number]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -532,28 +566,20 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MapMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  color={REGION_COLORS[a.region]}
+                  isTrip={tripIds.includes(a.id)}
+                  stepNum={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
