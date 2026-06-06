@@ -1,0 +1,3 @@
+## 2024-06-06 - React-Leaflet Object Reference Caching
+**Learning:** When working with React-Leaflet in this codebase, passing inline objects (like `pathOptions={{...}}`) or dynamically generated functions (like `L.divIcon` without caching) to Leaflet components causes severe performance bottlenecks. React-Leaflet will recreate the underlying Leaflet DOM nodes on every render if the object reference changes.
+**Action:** Always extract Leaflet options objects outside of components or wrap them in `useMemo`. Cache or memoize custom icon instances (like `L.divIcon`) using a `Map` or similar strategy to ensure stable object references across renders and prevent DOM thrashing.
