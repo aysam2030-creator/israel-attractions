@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const pinCache = new Map<string, L.DivIcon>();
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -50,6 +55,8 @@ const REGION_EMOJI: Record<Region, string> = {
   north: "⛰️", center: "🏙️", jerusalem: "🕍",
   south: "🏜️", deadsea: "🧂", coast: "🌊",
 };
+
+const POLYLINE_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
@@ -222,10 +229,10 @@ export default function App() {
     return () => { cancelled = true; };
   }, [tripAttractions]);
 
-  const onPick = (a: Attraction) => {
+  const onPick = useCallback((a: Attraction) => {
     setSelected(a);
     setFlyTarget([a.lat, a.lng]);
-  };
+  }, []);
 
   const toggleTrip = (id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
@@ -274,7 +281,7 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -532,28 +539,19 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MapMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  isTrip={tripIds.includes(a.id)}
+                  stepNum={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  onPick={onPick}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={POLYLINE_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
@@ -632,6 +630,35 @@ export default function App() {
     </div>
   );
 }
+
+const MapMarker = memo(({
+  a, lang, isTrip, stepNum, onPick
+}: {
+  a: Attraction;
+  lang: Lang;
+  isTrip: boolean;
+  stepNum?: number;
+  onPick: (a: Attraction) => void;
+}) => {
+  const icon = useMemo(() => makePin(REGION_COLORS[a.region], isTrip, stepNum), [a.region, isTrip, stepNum]);
+  const onClick = useCallback(() => onPick(a), [a, onPick]);
+  const eventHandlers = useMemo(() => ({ click: onClick }), [onClick]);
+
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={icon}
+      eventHandlers={eventHandlers}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 interface CardProps {
   a: Attraction;
