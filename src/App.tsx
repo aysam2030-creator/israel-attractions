@@ -642,12 +642,13 @@ const MapMarker = memo(({
 }) => {
   const icon = useMemo(() => makePin(REGION_COLORS[a.region], isTrip, stepNum), [a.region, isTrip, stepNum]);
   const onClick = useCallback(() => onPick(a), [a, onPick]);
+  const eventHandlers = useMemo(() => ({ click: onClick }), [onClick]);
 
   return (
     <Marker
       position={[a.lat, a.lng]}
       icon={icon}
-      eventHandlers={{ click: onClick }}
+      eventHandlers={eventHandlers}
     >
       <Popup>
         <div className="popup">
