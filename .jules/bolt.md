@@ -1,0 +1,3 @@
+## 2024-06-03 - [DOM Thrashing in React-Leaflet]
+**Learning:** In a React-Leaflet application, recreating leaflet options objects like `L.divIcon` inline on every render completely circumvents React's virtual DOM diffing logic and forces Leaflet to unmount and mount actual DOM nodes on the map. This causes severe DOM thrashing and major performance bottlenecks, especially when updating state frequently like dragging/panning the map.
+**Action:** When working with React-Leaflet in this codebase, ensure Leaflet properties like custom `L.divIcon` objects, polyline `positions`, and polyline `options` objects are heavily cached using `Map` or statically defined outside the component to preserve referential equality and prevent DOM unmounting/remounting across renders.
