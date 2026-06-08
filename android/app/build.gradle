@@ -54,14 +54,10 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    if (file('../capacitor-cordova-android-plugins').exists()) {
-        implementation project(':capacitor-cordova-android-plugins')
-    }
+    implementation project(':capacitor-cordova-android-plugins')
 }
 
-if (file('capacitor.build.gradle').exists() && file('../capacitor-cordova-android-plugins').exists()) {
-    apply from: 'capacitor.build.gradle'
-}
+apply from: 'capacitor.build.gradle'
 
 try {
     def servicesJSON = file('google-services.json')
