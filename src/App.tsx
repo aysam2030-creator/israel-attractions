@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,16 +19,29 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step}`;
+  if (pinCache.has(key)) {
+    return pinCache.get(key)!;
+  }
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+
+  pinCache.set(key, icon);
+  return icon;
 }
+
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
+const INITIAL_MAP_CENTER: [number, number] = [31.5, 34.9];
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -525,35 +538,29 @@ export default function App() {
           </aside>
 
           <main className="map-wrap">
-            <MapContainer center={[31.5, 34.9]} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
+            <MapContainer center={INITIAL_MAP_CENTER} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MapMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
+                  a={a}
+                  lang={lang}
                   icon={makePin(
                     REGION_COLORS[a.region],
                     tripIds.includes(a.id),
                     tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
                   )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
@@ -632,6 +639,32 @@ export default function App() {
     </div>
   );
 }
+
+const MapMarker = memo(function MapMarker({
+  a,
+  lang,
+  icon,
+  setSelected,
+}: {
+  a: Attraction;
+  lang: Lang;
+  icon: L.DivIcon;
+  setSelected: (a: Attraction) => void;
+}) {
+  const eventHandlers = useMemo(() => ({ click: () => setSelected(a) }), [a, setSelected]);
+  const position = useMemo(() => [a.lat, a.lng] as [number, number], [a.lat, a.lng]);
+
+  return (
+    <Marker position={position} icon={icon} eventHandlers={eventHandlers}>
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 interface CardProps {
   a: Attraction;
