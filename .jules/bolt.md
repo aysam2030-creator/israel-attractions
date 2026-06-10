@@ -1,0 +1,3 @@
+## 2024-06-10 - React-Leaflet Reference Equality Thrashing
+**Learning:** React-Leaflet components (like `Marker`, `Polyline`) are highly sensitive to reference equality for their props (like `icon` (`L.divIcon`), `positions` paths, and `pathOptions`). Passing inline objects, dynamically creating arrays, or recreating Leaflet objects on every render breaks reference equality checks, causing React-Leaflet to remove and recreate DOM elements (DOM thrashing), leading to severe performance bottlenecks.
+**Action:** Always cache Leaflet object instances (e.g., caching `L.divIcon` in a Map), memoize arrays passed as positions/paths with `useMemo`, and extract static `options` objects outside the component's render loop when working with React-Leaflet.
