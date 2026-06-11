@@ -1,0 +1,3 @@
+## 2024-06-11 - React-Leaflet Object Reference Optimization
+**Learning:** In this codebase's architecture, passing inline objects or unmemoized arrays to `react-leaflet` components (like `Polyline`'s `positions` and `pathOptions`, or creating `L.divIcon` inside a render loop) causes severe DOM thrashing due to Leaflet recreating internal elements on every single React render.
+**Action:** When working with `react-leaflet` in this codebase, always ensure that Leaflet properties (like `L.divIcon` instances, polyline paths, and options objects) are cached or memoized to maintain stable object references across renders and prevent severe performance bottlenecks from DOM thrashing.
