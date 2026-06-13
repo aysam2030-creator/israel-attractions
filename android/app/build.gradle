@@ -57,6 +57,12 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
+def cordovaVars = new File(projectDir, "../capacitor-cordova-android-plugins/cordova.variables.gradle")
+if (!cordovaVars.exists()) {
+    cordovaVars.parentFile.mkdirs()
+    cordovaVars.write('ext {}')
+}
+
 apply from: 'capacitor.build.gradle'
 
 try {
