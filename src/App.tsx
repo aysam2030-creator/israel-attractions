@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.DivIcon instances to prevent React-Leaflet from destroying and
+// recreating the map marker DOM elements on every render (DOM thrashing).
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -49,6 +51,9 @@ const REGION_COLORS: Record<Region, string> = {
 };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
+
+// ⚡ Bolt: Extract pathOptions to a constant outside the component to guarantee a stable
+// object reference. Passing an inline object causes React-Leaflet to re-render continuously.
 const POLYLINE_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
