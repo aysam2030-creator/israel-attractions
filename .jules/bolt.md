@@ -1,0 +1,3 @@
+## 2024-06-13 - Prevent DOM Thrashing with React-Leaflet
+**Learning:** In this codebase, creating new instances of Leaflet objects (like `L.divIcon`) or passing inline objects to `pathOptions` in React-Leaflet components (e.g. `<Polyline>`) inside the render loop causes severe DOM thrashing. React-Leaflet does not do deep comparisons on these options and creates/destroys DOM elements continuously if the references change.
+**Action:** When working with react-leaflet, ensure Leaflet properties (like `L.divIcon`, polyline paths, and options objects) are cached (e.g., using a Map or memoized) or extracted as constants outside the component to maintain stable object references across renders.
