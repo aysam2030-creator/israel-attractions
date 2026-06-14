@@ -57,6 +57,13 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
+// Ensure the cordova variables gradle file exists to avoid CI failures when npx cap sync isn't run
+def cordovaVariablesFile = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (!cordovaVariablesFile.exists()) {
+    cordovaVariablesFile.parentFile.mkdirs()
+    cordovaVariablesFile.text = 'ext {}'
+}
+
 apply from: 'capacitor.build.gradle'
 
 try {
