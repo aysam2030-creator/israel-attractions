@@ -1,5 +1,10 @@
 include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+// Ensure we don't try to include the Cordova plugins directory if cap sync hasn't run and generated it
+def cordovaPluginsDir = new File(settingsDir, 'capacitor-cordova-android-plugins')
+if (cordovaPluginsDir.exists()) {
+    include ':capacitor-cordova-android-plugins'
+    project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
+}
 
 apply from: 'capacitor.settings.gradle'
