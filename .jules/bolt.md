@@ -1,0 +1,3 @@
+## 2024-03-24 - React-Leaflet DOM Thrashing
+**Learning:** React-Leaflet maps in this codebase suffer from severe performance bottlenecks (DOM thrashing) if parent map container re-renders (like when selecting an item) unless all child map components (`Marker`, `Polyline`) are completely memoized and all props (`icon`, `positions`, `eventHandlers`) have stable references.
+**Action:** When working with Leaflet in React, always isolate map layers (like `Marker`) into their own `memo()` wrapped components, use `useMemo`/`useCallback` for event handlers and arrays, and explicitly cache `L.divIcon` objects outside the render cycle.

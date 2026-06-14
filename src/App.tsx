@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon instances to prevent memory thrashing on every re-render
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -38,6 +45,9 @@ const REGION_COLORS: Record<Region, string> = {
   deadsea: "#60a5fa",
   south: "#f472b6",
 };
+
+const INITIAL_MAP_CENTER: [number, number] = [31.5, 34.9];
+const POLYLINE_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
@@ -95,6 +105,37 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   list.forEach((a, i) => out[Math.floor(i / perDay)].push(a));
   return out.filter((d) => d.length > 0);
 }
+
+interface MemoMarkerProps {
+  a: Attraction;
+  lang: Lang;
+  isTrip: boolean;
+  tripStep?: number;
+  onSelect: (a: Attraction) => void;
+}
+
+// ⚡ Bolt: Memoize individual Leaflet Markers. React-Leaflet maps often suffer from severe performance bottlenecks
+// due to DOM thrashing if the parent MapContainer re-renders (e.g. from state changes like selecting an item).
+const MemoMarker = memo(({ a, lang, isTrip, tripStep, onSelect }: MemoMarkerProps) => {
+  const eventHandlers = useMemo(() => ({
+    click: () => onSelect(a)
+  }), [a, onSelect]);
+
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={makePin(REGION_COLORS[a.region], isTrip, tripStep)}
+      eventHandlers={eventHandlers}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -227,6 +268,9 @@ export default function App() {
     setFlyTarget([a.lat, a.lng]);
   };
 
+  // ⚡ Bolt: Provide a stable callback function reference for MemoMarker to prevent unnecessary re-renders
+  const handleMarkerClick = useCallback((a: Attraction) => setSelected(a), []);
+
   const toggleTrip = (id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
   };
@@ -274,7 +318,8 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
-  const tripPath: [number, number][] = tripAttractions.map((a) => [a.lat, a.lng]);
+  // ⚡ Bolt: Stabilize the polyline coordinates to avoid react-leaflet deep-equality diffs
+  const tripPath = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng] as [number, number]), [tripAttractions]);
 
   const filterCount =
     (region !== "all" ? 1 : 0) + (category !== "all" ? 1 : 0) +
@@ -525,35 +570,26 @@ export default function App() {
           </aside>
 
           <main className="map-wrap">
-            <MapContainer center={[31.5, 34.9]} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
+            <MapContainer center={INITIAL_MAP_CENTER} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MemoMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  isTrip={tripIds.includes(a.id)}
+                  tripStep={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  onSelect={handleMarkerClick}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={POLYLINE_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
