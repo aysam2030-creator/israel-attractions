@@ -4,3 +4,6 @@
 ## 2024-05-18 - Capacitor CLI context requirement
 **Learning:** Running `npx cap sync android` inside the `android/` directory fails with "android platform has not been added yet". Capacitor commands expect to be run from the root of the project where `capacitor.config.ts` exists.
 **Action:** Always run `cap` commands from the project root.
+## 2024-05-18 - Gradle dependency failure due to missing plugin build.gradle
+**Learning:** In CI environments where `npx cap sync android` is skipped, the entire `capacitor-cordova-android-plugins` directory may be missing. Dynamically generating just `cordova.variables.gradle` is not enough, as Gradle will fail to resolve the module dependencies (e.g. `Could not resolve project :capacitor-cordova-android-plugins`) because the `build.gradle` defining it as a library module is missing.
+**Action:** When working around missing Capacitor plugin directories in Android CI builds, dynamically generate both a minimal `build.gradle` containing `apply plugin: "com.android.library"` and the `cordova.variables.gradle` file.
