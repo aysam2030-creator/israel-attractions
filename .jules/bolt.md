@@ -7,3 +7,6 @@
 ## 2024-05-18 - Gradle dependency failure due to missing plugin build.gradle
 **Learning:** In CI environments where `npx cap sync android` is skipped, the entire `capacitor-cordova-android-plugins` directory may be missing. Dynamically generating just `cordova.variables.gradle` is not enough, as Gradle will fail to resolve the module dependencies (e.g. `Could not resolve project :capacitor-cordova-android-plugins`) because the `build.gradle` defining it as a library module is missing.
 **Action:** When working around missing Capacitor plugin directories in Android CI builds, dynamically generate both a minimal `build.gradle` containing `apply plugin: "com.android.library"` and the `cordova.variables.gradle` file.
+## 2024-05-18 - Gradle Evaluation Lifecycle for dynamic files
+**Learning:** Dynamically generating a missing `build.gradle` file inside `app/build.gradle` is too late in the Gradle lifecycle to properly define a library subproject. `settings.gradle` has already been evaluated and determined the directory is empty.
+**Action:** Always place scripts that dynamically generate missing subproject `build.gradle` files inside `settings.gradle` BEFORE assigning the `projectDir` property, ensuring Gradle resolves the dependency structure correctly.
