@@ -57,6 +57,13 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
+// Workaround for CI failing when missing capacitor plugins variables gradle file
+def cordovaVariablesFile = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (!cordovaVariablesFile.exists()) {
+    cordovaVariablesFile.parentFile.mkdirs()
+    cordovaVariablesFile.write('ext {}')
+}
+
 apply from: 'capacitor.build.gradle'
 
 try {
