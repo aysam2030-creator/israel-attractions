@@ -1,0 +1,3 @@
+## 2026-06-16 - Memoizing react-leaflet properties to prevent DOM thrashing
+**Learning:** Leaflet components like Marker and Polyline are highly sensitive to unstable object references (like dynamically created L.divIcon, polyline paths arrays, and options objects). Passing inline objects causes severe performance bottlenecks due to continuous DOM thrashing and re-rendering of map layers.
+**Action:** Always cache or memoize L.divIcon instances using a Map, wrap polyline paths in useMemo, and extract static options objects (like pathOptions) outside of the render cycle when working with react-leaflet.
