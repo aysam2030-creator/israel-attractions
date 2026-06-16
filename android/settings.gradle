@@ -1,5 +1,14 @@
 include ':app'
+
+// Fix missing plugins directory error in CI
+def pluginsDir = new File('./capacitor-cordova-android-plugins/')
+if (!pluginsDir.exists()) {
+    pluginsDir.mkdirs()
+    new File(pluginsDir, 'build.gradle').text = "apply plugin: 'com.android.library'\nandroid {\n  namespace 'capacitor.cordova.android.plugins'\n  compileSdkVersion 34\n}"
+    new File(pluginsDir, 'cordova.variables.gradle').text = "ext {}"
+}
+
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+project(':capacitor-cordova-android-plugins').projectDir = pluginsDir
 
 apply from: 'capacitor.settings.gradle'
