@@ -4,7 +4,7 @@ include ':capacitor-cordova-android-plugins'
 def cordovaPluginDir = new File(rootDir, 'capacitor-cordova-android-plugins')
 if (!cordovaPluginDir.exists()) {
     cordovaPluginDir.mkdirs()
-    new File(cordovaPluginDir, 'build.gradle').text = "apply plugin: 'com.android.library'\nandroid {\n    namespace 'capacitor.cordova.android.plugins'\n    compileSdkVersion rootProject.ext.compileSdkVersion\n}\n"
+    new File(cordovaPluginDir, 'build.gradle').text = "apply plugin: 'com.android.library'\nandroid {\n    namespace 'capacitor.cordova.android.plugins'\n    compileSdkVersion rootProject.ext.compileSdkVersion\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_21\n        targetCompatibility JavaVersion.VERSION_21\n    }\n}\n"
     new File(cordovaPluginDir, 'cordova.variables.gradle').text = "ext {}\n"
 }
 
