@@ -1,5 +1,23 @@
 include ':app'
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+// Fix for missing capacitor-cordova-android-plugins in CI
+def cordovaPluginsDir = new File('./capacitor-cordova-android-plugins/')
+if (!cordovaPluginsDir.exists()) {
+    cordovaPluginsDir.mkdirs()
+    new File(cordovaPluginsDir, 'build.gradle').text = '''
+        apply plugin: 'com.android.library'
+        android {
+            namespace "com.aysam.israelattractions.cordova.plugins"
+            compileSdkVersion 34
+            defaultConfig {
+                minSdkVersion 22
+            }
+        }
+    '''
+    new File(cordovaPluginsDir, 'cordova.variables.gradle').text = 'ext {}'
+}
+
+project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
 
 apply from: 'capacitor.settings.gradle'
