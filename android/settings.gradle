@@ -8,9 +8,9 @@ if (!pluginsDir.exists()) {
         apply plugin: 'com.android.library'
         android {
             namespace 'capacitor.cordova.android.plugins'
-            compileSdk 34
+            compileSdk 36
             defaultConfig {
-                minSdk 22
+                minSdk 24
             }
             compileOptions {
                 sourceCompatibility JavaVersion.VERSION_21
