@@ -1,5 +1,27 @@
 include ':app'
+
+// Dynamically create capacitor-cordova-android-plugins to fix CI
+def pluginsDir = new File(rootDir, 'capacitor-cordova-android-plugins')
+if (!pluginsDir.exists()) {
+    pluginsDir.mkdirs()
+    new File(pluginsDir, 'build.gradle').text = """
+        apply plugin: 'com.android.library'
+        android {
+            namespace 'capacitor.cordova.android.plugins'
+            compileSdk 36
+            defaultConfig {
+                minSdk 24
+            }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_21
+                targetCompatibility JavaVersion.VERSION_21
+            }
+        }
+    """
+    new File(pluginsDir, 'cordova.variables.gradle').text = "ext {}"
+}
+
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+project(':capacitor-cordova-android-plugins').projectDir = pluginsDir
 
 apply from: 'capacitor.settings.gradle'

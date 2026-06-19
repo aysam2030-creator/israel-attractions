@@ -1,0 +1,3 @@
+## 2024-06-20 - React Leaflet DOM Thrashing
+**Learning:** Passing unstable object references to react-leaflet components (like inline objects to pathOptions or re-evaluating arrays on every render for tripPath) causes severe DOM thrashing because Leaflet completely unmounts and remounts the underlying DOM nodes when prop references change. Additionally, dynamically generating L.divIcon instances on every render without caching creates a large number of unnecessary objects and triggers re-renders for every marker on the map.
+**Action:** When working with react-leaflet, strictly memoize object props (e.g., pathOptions, arrays of coordinates) and cache dynamically generated L.divIcon objects outside of the render cycle using a Map or stable closure.
