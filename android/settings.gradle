@@ -1,3 +1,20 @@
+// Create missing plugin directories and minimal gradle files dynamically
+def pluginsDir = new File(rootDir, 'capacitor-cordova-android-plugins')
+if (!pluginsDir.exists()) {
+    pluginsDir.mkdirs()
+    new File(pluginsDir, 'build.gradle').text = '''
+        apply plugin: 'com.android.library'
+        android {
+            namespace "capacitor.cordova.android.plugins"
+            compileSdk 34
+            defaultConfig {
+                minSdkVersion 22
+            }
+        }
+    '''
+    new File(pluginsDir, 'cordova.variables.gradle').text = 'ext {}'
+}
+
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
