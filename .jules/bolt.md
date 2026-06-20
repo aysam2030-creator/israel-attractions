@@ -1,0 +1,3 @@
+## 2024-06-20 - React-Leaflet Memoization Pitfalls
+**Learning:** In React-Leaflet, passing inline objects to props like `pathOptions` or dynamically generating `L.divIcon` instances on every render causes the child components to continuously re-render and re-paint the Leaflet layers, leading to severe DOM thrashing and performance bottlenecks because the object references change on every React cycle.
+**Action:** Always lift static configuration objects (like `pathOptions`) out of the render loop into constants. For dynamic objects like `L.divIcon` instances, implement a cache mechanism (e.g., using a `Map`) based on the dynamic inputs to ensure stable references are returned across renders.
