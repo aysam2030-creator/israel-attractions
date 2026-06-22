@@ -1,5 +1,27 @@
 include ':app'
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+def pluginDir = new File(settingsDir, 'capacitor-cordova-android-plugins/')
+if (!pluginDir.exists()) {
+    pluginDir.mkdirs()
+}
+
+def pluginBuildGradle = new File(pluginDir, 'build.gradle')
+if (!pluginBuildGradle.exists()) {
+    pluginBuildGradle.text = """
+apply plugin: 'com.android.library'
+android {
+    namespace "capacitor.cordova.android.plugins"
+    compileSdkVersion 33
+}
+"""
+}
+
+def cordovaVariablesGradle = new File(pluginDir, 'cordova.variables.gradle')
+if (!cordovaVariablesGradle.exists()) {
+    cordovaVariablesGradle.text = "ext {}"
+}
+
+project(':capacitor-cordova-android-plugins').projectDir = pluginDir
 
 apply from: 'capacitor.settings.gradle'
