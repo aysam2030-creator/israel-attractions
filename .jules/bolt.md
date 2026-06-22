@@ -1,0 +1,3 @@
+## 2024-05-24 - React-Leaflet Prop Instability
+**Learning:** In react-leaflet, passing newly instantiated objects/arrays to properties like `icon`, `positions`, or `pathOptions` on every render defeats React's DOM reconciliation, leading to aggressive re-rendering of internal Leaflet structures and causing noticeable lag in map-heavy applications.
+**Action:** Always memoize arrays passed to `positions` with `useMemo`, extract static style objects like `pathOptions` to module-level constants, and cache functions that return Leaflet instances (e.g., `L.divIcon`) using a `Map` when dynamically generated.
