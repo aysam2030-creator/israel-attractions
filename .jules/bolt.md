@@ -1,0 +1,3 @@
+## 2024-05-24 - React-Leaflet Prop Stability
+**Learning:** In react-leaflet, passing inline objects (like `pathOptions={{ color: "#a78bfa" }}`) or re-created arrays (like mapped coordinates) to components such as `<Polyline>` causes continuous internal updates (`setStyle()` and `setLatLngs()`) on every render. Leaflet icon creation (`L.divIcon`) can also be a hidden performance sink when rendering many markers.
+**Action:** Always extract static options objects to module-level constants. Use `useMemo` for dynamically calculated arrays like map coordinates. Cache dynamically generated Leaflet configurations, such as custom div icons, outside the render cycle or use simple map-based caches to prevent thrashing.
