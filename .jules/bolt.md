@@ -1,0 +1,4 @@
+
+## 2024-05-18 - [React-Leaflet DOM Thrashing from Inline References]
+**Learning:** Passing inline objects (like `pathOptions={{color: "red"}}` or `L.divIcon({ ... })`) or inline event handlers (`eventHandlers={{ click: () => ... }}`) as props to `react-leaflet` components causes severe DOM thrashing. `react-leaflet` relies on strict referential equality. When a new object reference is passed on every render, it triggers costly and unnecessary teardown and recreation of underlying Leaflet instances and DOM elements on the map.
+**Action:** Always hoist static Leaflet configurations (like `pathOptions`) out of the render function, use simple object caches for dynamic but repetitive elements (like map pin icons), and extract map markers into separate components wrapped in `memo()` where dynamic event handlers can be memoized properly with `useMemo`/`useCallback`.
