@@ -1,5 +1,29 @@
 include ':app'
+
+// Create dummy capacitor-cordova-android-plugins to fix CI build without `npx cap sync`
+def cordovaPluginsDir = new File('./capacitor-cordova-android-plugins/')
+if (!cordovaPluginsDir.exists()) {
+    cordovaPluginsDir.mkdirs()
+    new File(cordovaPluginsDir, 'build.gradle').text = """
+        apply plugin: 'com.android.library'
+        android {
+            namespace "capacitor.cordova.android.plugins"
+            compileSdkVersion 34
+            defaultConfig {
+                minSdkVersion 22
+            }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    """
+    new File(cordovaPluginsDir, 'cordova.variables.gradle').text = """
+        ext {}
+    """
+}
+
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
 
 apply from: 'capacitor.settings.gradle'
