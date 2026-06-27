@@ -1,5 +1,39 @@
 include ':app'
+
+// Dynamically create missing capacitor-cordova-android-plugins files to fix CI build errors
+def cordovaPluginsDir = new File(settingsDir, 'capacitor-cordova-android-plugins')
+if (!cordovaPluginsDir.exists()) {
+    cordovaPluginsDir.mkdirs()
+}
+
+def cordovaBuildGradle = new File(cordovaPluginsDir, 'build.gradle')
+if (!cordovaBuildGradle.exists()) {
+    cordovaBuildGradle.write("""
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.aysam.israelattractions.cordovaplugins'
+    compileSdk 34
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 34
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+""")
+}
+
+def cordovaVariablesGradle = new File(cordovaPluginsDir, 'cordova.variables.gradle')
+if (!cordovaVariablesGradle.exists()) {
+    cordovaVariablesGradle.write("""
+ext {}
+""")
+}
+
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
 
 apply from: 'capacitor.settings.gradle'
