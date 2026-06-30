@@ -1,5 +1,23 @@
 include ':app'
+
+// Dynamically create minimal required capacitor-cordova-android-plugins files if they don't exist
+// to prevent CI build failures when the directory is gitignored and `npx cap sync` isn't run.
+def cordovaPluginsDir = new File(settingsDir, 'capacitor-cordova-android-plugins')
+if (!cordovaPluginsDir.exists()) {
+    cordovaPluginsDir.mkdirs()
+    new File(cordovaPluginsDir, 'build.gradle').text = """
+apply plugin: 'com.android.library'
+android {
+    namespace "capacitor.cordova.android.plugins"
+    compileSdk 34
+}
+"""
+    new File(cordovaPluginsDir, 'cordova.variables.gradle').text = """
+ext {}
+"""
+}
+
 include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
 
 apply from: 'capacitor.settings.gradle'

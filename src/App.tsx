@@ -19,16 +19,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache L.DivIcon instances to prevent React Leaflet from tearing down and
+// rebuilding DOM nodes for map markers on every render when object references change.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+
+  pinCache.set(key, icon);
+  return icon;
 }
+
+// Extract path options to a constant to maintain a stable reference
+// and prevent React Leaflet from recalculating path properties on every render.
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -553,7 +567,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />

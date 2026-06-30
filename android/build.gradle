@@ -22,6 +22,34 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Force Gradle to use Java 21 for compilation (Capacitor 8.x requires Java 21)
+    // even if JAVA_HOME points to an older JDK.
+    plugins.withId("com.android.application") {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_21
+                targetCompatibility JavaVersion.VERSION_21
+            }
+        }
+    }
+    plugins.withId("com.android.library") {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_21
+                targetCompatibility JavaVersion.VERSION_21
+            }
+        }
+    }
+
+    // Also instruct the Java toolchain to fetch and use JDK 21
+    plugins.withType(JavaPlugin).configureEach {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {
