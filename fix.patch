@@ -1,0 +1,23 @@
+--- android/settings.gradle
++++ android/settings.gradle
+@@ -1,5 +1,19 @@
+ include ':app'
++
++// Dynamically create missing capacitor-cordova-android-plugins files for CI
++def cordovaPluginsDir = new File(rootDir, 'capacitor-cordova-android-plugins')
++if (!cordovaPluginsDir.exists()) {
++    cordovaPluginsDir.mkdirs()
++    new File(cordovaPluginsDir, 'build.gradle').text = '''
++apply plugin: 'com.android.library'
++android {
++    namespace "capacitor.cordova.android.plugins"
++    compileSdk 34
++}
++'''
++    new File(cordovaPluginsDir, 'cordova.variables.gradle').text = 'ext {}'
++}
++
+ include ':capacitor-cordova-android-plugins'
+ project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+ apply from: 'capacitor.settings.gradle'
