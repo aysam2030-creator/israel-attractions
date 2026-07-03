@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache custom marker pins to maintain stable Leaflet object references
+// and prevent severe DOM thrashing and remounting on every render.
 const pinCache = new Map<string, L.DivIcon>();
 function makePin(color: string, isTrip: boolean, step?: number) {
   const key = `${color}-${isTrip}-${step}`;
@@ -32,10 +34,14 @@ function makePin(color: string, isTrip: boolean, step?: number) {
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  if (pinCache.size > 1000) {
+    pinCache.clear();
+  }
   pinCache.set(key, icon);
   return icon;
 }
 
+// ⚡ Bolt: Extract static Leaflet options outside the component to preserve object identity
 const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -281,6 +287,7 @@ export default function App() {
 
   const visibleList = tab === "explore" ? filtered : tripAttractions;
   const mapAttractions = tab === "explore" ? filtered : tripAttractions;
+  // ⚡ Bolt: Memoize the Leaflet polyline path array to prevent unnecessary React-Leaflet re-renders
   const tripPath: [number, number][] = useMemo(() => tripAttractions.map((a) => [a.lat, a.lng]), [tripAttractions]);
 
   const filterCount =
