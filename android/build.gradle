@@ -17,12 +17,30 @@ buildscript {
 
 apply from: "variables.gradle"
 
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
+
+    // Workaround for CI running on JDK 17 while Capacitor 8 requires JDK 21
+    plugins.withId('com.android.application') {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
+    plugins.withId('com.android.library') {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
 }
+
 
 task clean(type: Delete) {
     delete rootProject.buildDir
