@@ -1,0 +1,3 @@
+## $(date +%Y-%m-%d) - Prevent React-Leaflet DOM Thrashing
+**Learning:** Leaflet components like `Marker` and `Polyline` inside React loops will trigger heavy DOM updates if their object props (like `icon`, `pathOptions`, or `positions`) are recreated on every render, even if the values are identical. Hook rules prevent using `useMemo` inside `.map()`.
+**Action:** Extract static options outside the component, cache dynamic objects (like `L.divIcon`) using an external `Map` with string keys, and `useMemo` array transformations (like coordinate arrays) before rendering to maintain stable references.
