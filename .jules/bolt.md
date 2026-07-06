@@ -1,0 +1,3 @@
+## 2024-05-14 - React Leaflet Re-renders & Pure Functions
+**Learning:** `react-leaflet` components like `<Marker>` will aggressively thrash the DOM if they receive new object references for properties like `icon` on every render. Creating instances like `L.divIcon` inline causes massive performance degradation. Also, using `Math.random()` inside `useMemo` violates React's purity rules and creates unstable outputs.
+**Action:** Always use an external cache (like a `Map`) or stable references for dynamically generated Leaflet objects. Replace `Math.random()` inside React render loops or memos with deterministic calculations (e.g., using item indexes and trig functions) to maintain stable pseudo-randomness without violating purity rules.
