@@ -970,7 +970,9 @@ function VoicePlayer({ dataUrl, duration, isMe }: { dataUrl: string; duration: n
   };
 
   // Generate fake waveform bars
-  const bars = useMemo(() => Array.from({ length: 22 }, () => 0.3 + Math.random() * 0.7), []);
+  // Avoid Math.random() inside useMemo to adhere to React pure render rule.
+  // We can base the variation off the index to produce a stable pseudo-random look.
+  const bars = useMemo(() => Array.from({ length: 22 }, (_, i) => 0.3 + ((Math.sin(i * 123.45) + 1) / 2) * 0.7), []);
   const playedIdx = Math.floor(bars.length * progress);
 
   return (
