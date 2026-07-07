@@ -1,0 +1,3 @@
+## 2024-05-24 - Cache dynamically generated react-leaflet properties
+**Learning:** In react-leaflet, passing newly instantiated objects like `L.divIcon` or inline object literals for `eventHandlers` and `pathOptions` directly into component props inside a `.map()` loop or render function causes the Leaflet element to be recreated or excessively updated on every React render. This leads to severe DOM thrashing and performance bottlenecks, especially when rendering lists of map markers.
+**Action:** Use an external caching mechanism (like a `Map` outside the component) to store and reuse `L.divIcon` instances based on their arguments. Extract static options objects (like `pathOptions`) to constants outside the React component to ensure stable references across renders.
