@@ -19,15 +19,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache dynamically generated DivIcon instances by a stringified key
+// to maintain stable object references and prevent severe DOM thrashing on re-renders.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const cacheKey = `${color}-${isTrip}-${step ?? "none"}`;
+  if (pinCache.has(cacheKey)) {
+    return pinCache.get(cacheKey)!;
+  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(cacheKey, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -95,6 +105,9 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   list.forEach((a, i) => out[Math.floor(i / perDay)].push(a));
   return out.filter((d) => d.length > 0);
 }
+
+const MAP_CENTER: [number, number] = [31.5, 34.9];
+const POLYLINE_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -525,7 +538,7 @@ export default function App() {
           </aside>
 
           <main className="map-wrap">
-            <MapContainer center={[31.5, 34.9]} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
+            <MapContainer center={MAP_CENTER} zoom={8} className="map" scrollWheelZoom zoomControl={false}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -553,7 +566,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={POLYLINE_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
