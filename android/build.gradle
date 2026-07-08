@@ -22,6 +22,21 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    plugins.withType(com.android.build.gradle.LibraryPlugin) {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
+    plugins.withType(com.android.build.gradle.AppPlugin) {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {
