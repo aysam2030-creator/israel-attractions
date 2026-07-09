@@ -22,6 +22,24 @@ allprojects {
         google()
         mavenCentral()
     }
+    plugins.withId("com.android.application") {
+        android {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(21)
+                }
+            }
+        }
+    }
+    plugins.withId("com.android.library") {
+        android {
+            java {
+                toolchain {
+                    languageVersion = JavaLanguageVersion.of(21)
+                }
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {
