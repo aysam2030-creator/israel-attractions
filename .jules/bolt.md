@@ -1,0 +1,3 @@
+## 2024-07-10 - Leaflet DOM Thrashing from Inline React Props
+**Learning:** In React-Leaflet, passing inline objects to props like `pathOptions` on `<Polyline>`, or dynamically generating new `L.divIcon` instances for `<Marker icon={...}>` causes React-Leaflet to recreate Leaflet nodes and re-apply styles on *every* single render. The `App` component renders frequently due to map interactions.
+**Action:** Always cache `L.divIcon` creation using a module-level `Map` and extract stable options objects like `pathOptions` outside the component to preserve reference equality and stop DOM thrashing.
