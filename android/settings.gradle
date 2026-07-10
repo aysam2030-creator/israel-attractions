@@ -1,22 +1,4 @@
 include ':app'
-
-// --- FIX FOR CAPACITOR CORDOVA PLUGIN SYNC IN CI ---
-def cordovaPluginDir = new File(settingsDir, 'capacitor-cordova-android-plugins')
-if (!cordovaPluginDir.exists()) {
-    cordovaPluginDir.mkdirs()
-    def buildGradle = new File(cordovaPluginDir, 'build.gradle')
-    buildGradle.text = '''
-        apply plugin: 'com.android.library'
-        android {
-            namespace "capacitor.cordova.android.plugins"
-            compileSdk 34
-        }
-    '''
-    def varsGradle = new File(cordovaPluginDir, 'cordova.variables.gradle')
-    varsGradle.text = 'ext {}'
-}
-// ----------------------------------------------------
-
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
