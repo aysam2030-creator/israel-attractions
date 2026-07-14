@@ -1,0 +1,3 @@
+## 2024-05-19 - [Leaflet Object Thrashing Optimization]
+**Learning:** In a heavily map-based react application utilizing react-leaflet, re-rendering the MapContainer with markers generated on the fly via `L.divIcon()` can cause severe frame drops and garbage collection thrashing. Additionally, inline objects or unmemoized arrays for Map components (like Polyline) break reference equality, triggering expensive native Leaflet resets under the hood.
+**Action:** When rendering dynamic markers in Leaflet, always implement an external cache (e.g. `Map<string, L.DivIcon>`) instead of generating them during render. Never pass inline objects or mapped unmemoized arrays to react-leaflet props like `pathOptions` or `positions`.
