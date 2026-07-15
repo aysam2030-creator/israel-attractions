@@ -1,0 +1,3 @@
+## 2025-02-13 - Optimize React-Leaflet property references to prevent DOM thrashing
+**Learning:** In this codebase, dynamically generating Leaflet objects (like `L.divIcon` from variable arguments or options objects for `Polyline`) inside render loops causes react-leaflet to thrash the DOM on every render.
+**Action:** Use an external `Map` to cache and retrieve dynamically generated Leaflet objects (like `L.divIcon`) by a stringified key. Memoize array calculations mapping coordinates (`useMemo`) and move static options objects out of the render function to preserve object identities and prevent DOM thrashing.
