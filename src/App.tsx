@@ -19,16 +19,30 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon objects to prevent DOM thrashing in React-Leaflet when rendering markers.
+// Generating icons is expensive, and passing new references on every render forces React-Leaflet to update the DOM.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+
+  pinCache.set(key, icon);
+  return icon;
 }
+
+// ⚡ Bolt: Extract inline options object to a constant to maintain a stable reference across renders.
+// Passing inline objects like { color: "#a78bfa" } to Polyline pathOptions breaks memoization and causes re-renders.
+const polylineOptions = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -553,7 +567,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={polylineOptions}
                 />
               )}
               <FlyTo target={flyTarget} />
