@@ -1,0 +1,3 @@
+## 2024-05-30 - Caching Leaflet `L.divIcon` to prevent DOM Thrashing
+**Learning:** React-Leaflet recreates DOM elements if Leaflet properties like `icon` or `pathOptions` change reference between renders. Creating `L.divIcon` on the fly inside the render loop (or in helper functions called during render) causes severe DOM thrashing because each call returns a new object reference, forcing Leaflet to destroy and recreate the marker DOM node.
+**Action:** Use an external `Map` to cache `L.divIcon` instances by a stringified key of their arguments. This ensures stable object references across renders without violating React Hook rules (e.g. using `useMemo` inside `.map()`). Extract static object literals like `pathOptions` into constants outside the component.
