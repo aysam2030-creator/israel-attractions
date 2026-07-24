@@ -1,0 +1,3 @@
+## 2026-07-24 - Prevent react-leaflet DOM thrashing
+**Learning:** Leaflet components like `<Polyline>` and `<Marker>` in `react-leaflet` cause severe DOM thrashing and performance bottlenecks if their properties (like `pathOptions`, `icon` instances created via `L.divIcon`, or paths arrays) are dynamically generated on every render. Because the object references change, Leaflet constantly re-initializes or re-renders the DOM elements.
+**Action:** Always extract Leaflet static configuration objects (like `pathOptions`) outside the component. Wrap dynamic array properties (like paths) in `useMemo`. Cache dynamic generated instances (like custom `L.DivIcon`) using an external `Map` indexed by a stable stringkey to preserve stable object references across renders.
