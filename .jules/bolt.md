@@ -1,0 +1,3 @@
+## 2024-07-27 - [react-leaflet DOM thrashing]
+**Learning:** In react-leaflet, passing dynamically generated properties (like `L.divIcon` objects or `pathOptions` objects for Polylines) to components inside render loops causes severe performance bottlenecks due to DOM thrashing, as new object references trigger full re-renders and re-mounts on the map.
+**Action:** Use an external Map (e.g. `new Map<string, L.DivIcon>()`) to cache and retrieve generated objects by stringified key, or extract them to stable constants outside the component, to maintain stable object references across renders and prevent DOM thrashing.
