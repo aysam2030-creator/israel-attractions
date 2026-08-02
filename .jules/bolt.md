@@ -1,0 +1,3 @@
+## 2024-05-19 - Caching L.DivIcon in React-Leaflet
+**Learning:** React-Leaflet recreates DOM elements (markers) on every render if `L.divIcon` is passed directly within the render cycle. This causes severe DOM thrashing and excessive garbage collection overhead. Since hooks like `useMemo` cannot be used inside `.map()` rendering loops without creating separate components for each marker (which might be overkill), caching these instances externally is an effective strategy.
+**Action:** Use a `Map` external to the component to cache `L.divIcon` instances based on their dynamic properties (e.g., color, step number) to stabilize references and prevent DOM thrashing when rendering large numbers of dynamic markers.
