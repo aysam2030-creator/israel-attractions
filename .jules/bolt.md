@@ -1,0 +1,3 @@
+## 2024-05-15 - Stable Object References in React-Leaflet
+**Learning:** React-Leaflet maps undergo severe DOM thrashing and performance degradation if Leaflet objects (like `L.divIcon`, pathOptions, array of coordinates) are instantiated inline during rendering. Because they lack stable references, react-leaflet removes and recreates the corresponding DOM elements (like `<Marker>` and `<Polyline>`) on every render.
+**Action:** Always extract static options to constants outside the component and use `useMemo` or external Maps (to bypass Hook limits inside loops) for dynamically generated Leaflet properties (e.g., dynamically styling map icons or generating polyline arrays).
