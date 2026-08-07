@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache dynamically generated L.divIcon instances to prevent DOM thrashing
+// and unnecessary re-renders in react-leaflet on every map update.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -59,6 +61,8 @@ const REGION_EMOJI: Record<Region, string> = {
   south: "🏜️", deadsea: "🧂", coast: "🌊",
 };
 
+// Extract path options outside component to maintain stable object reference.
+// Prevents unnecessary `<Polyline>` re-renders on map state changes.
 const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 function FlyTo({ target }: { target: [number, number] | null }) {
