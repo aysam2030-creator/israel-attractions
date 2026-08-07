@@ -19,15 +19,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache dynamically generated L.divIcon instances to prevent DOM thrashing
+// and unnecessary re-renders in react-leaflet on every map update.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
-  const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
-    className: "custom-pin",
-    html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 34],
-    popupAnchor: [0, -32],
-  });
+  const key = `${color}-${isTrip}-${step ?? 'none'}`;
+  let icon = pinCache.get(key);
+  if (!icon) {
+    const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
+    icon = L.divIcon({
+      className: "custom-pin",
+      html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 34],
+      popupAnchor: [0, -32],
+    });
+    pinCache.set(key, icon);
+  }
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -50,6 +60,10 @@ const REGION_EMOJI: Record<Region, string> = {
   north: "⛰️", center: "🏙️", jerusalem: "🕍",
   south: "🏜️", deadsea: "🧂", coast: "🌊",
 };
+
+// Extract path options outside component to maintain stable object reference.
+// Prevents unnecessary `<Polyline>` re-renders on map state changes.
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
@@ -553,7 +567,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
