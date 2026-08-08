@@ -1,0 +1,3 @@
+## 2024-08-08 - React-Leaflet Map Object Thrashing
+**Learning:** In react-leaflet, passing inline objects to Leaflet properties (like `L.divIcon` generated on the fly inside the render loop, or inline objects for `pathOptions`) creates new object references on every render. This causes react-leaflet to re-initialize map elements, causing severe DOM thrashing and performance bottlenecks.
+**Action:** Use an external caching mechanism (like a `Map`) to memoize dynamically generated objects (like `L.divIcon` based on stringified keys) and extract static options objects (like `pathOptions`) outside the React component.
