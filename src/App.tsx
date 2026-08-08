@@ -19,23 +19,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const pinCache = new Map<string, L.DivIcon>();
-
 function makePin(color: string, isTrip: boolean, step?: number) {
-  const key = `${color}-${isTrip}-${step}`;
-  if (pinCache.has(key)) {
-    return pinCache.get(key)!;
-  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  const icon = L.divIcon({
+  return L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
-  pinCache.set(key, icon);
-  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -103,8 +95,6 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   list.forEach((a, i) => out[Math.floor(i / perDay)].push(a));
   return out.filter((d) => d.length > 0);
 }
-
-const tripPathOptions = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -563,7 +553,7 @@ export default function App() {
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={tripPathOptions}
+                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
                 />
               )}
               <FlyTo target={flyTarget} />
