@@ -1,0 +1,3 @@
+## 2024-08-09 - react-leaflet re-renders
+**Learning:** Passing inline objects or functions to Leaflet event handlers or options directly in the mapping loop (e.g. `eventHandlers={{ click: ... }}` or `icon={makePin(...) }`) creates new object references on every render, triggering expensive DOM updates and rendering thrashing in react-leaflet.
+**Action:** Use an external Map to cache dynamically generated objects (like `L.divIcon`) by a key, avoiding hook violations inside `.map()` and maintaining stable references to prevent DOM thrashing. Also extract event handler references, or extract into memoized components.
