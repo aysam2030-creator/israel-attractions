@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache Leaflet icon instances to prevent object recreation on every render,
+// which causes react-leaflet to unmount and remount markers resulting in severe DOM thrashing.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -38,7 +40,11 @@ function makePin(color: string, isTrip: boolean, step?: number) {
   return icon;
 }
 
-const AttractionMarker = ({
+import { memo } from "react";
+
+// Extracted the marker into its own memoized component to maintain stable event handlers
+// and prevent react-leaflet from thrashing DOM nodes on parent re-renders.
+const AttractionMarker = memo(({
   attraction,
   icon,
   lang,
@@ -61,7 +67,7 @@ const AttractionMarker = ({
       </Popup>
     </Marker>
   );
-};
+});
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
