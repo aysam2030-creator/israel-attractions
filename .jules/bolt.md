@@ -1,0 +1,3 @@
+## 2024-08-12 - Prevent Leaflet Marker Re-renders
+**Learning:** Leaflet elements (like markers) shouldn't be repeatedly re-created with new `makePin` calls, new `eventHandlers` or `pathOptions` reference types on every render inside `.map()`, as they cause unnecessary DOM updates and performance drops, especially when interacting with the UI causing App to re-render.
+**Action:** Extract Leaflet `<Marker>` into its own memoized component so it isn't repeatedly recreated, and use an external `Map` to cache dynamic properties like `L.divIcon` based on stringified keys to prevent object thrashing. Alternatively, wrap the map elements in memoized components.
