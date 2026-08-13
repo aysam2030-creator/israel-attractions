@@ -1,0 +1,3 @@
+## 2026-08-13 - [Memoize react-leaflet components & stable refs]
+**Learning:** In react-leaflet, passing inline objects to `eventHandlers={{ click: handler }}` or inline bounds/options objects to primitives like Polyline directly inside maps/render functions triggers severe DOM thrashing, because Leaflet updates component bindings internally whenever object references change.
+**Action:** Memoize standard Leaflet objects (like `L.divIcon`) in an external Map using stringified args instead of raw object caching, extract markers into separate `memo()` wrapped components to use internal `useMemo` and `useCallback`, and extract static arrays/objects out of component scopes.
