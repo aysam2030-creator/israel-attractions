@@ -1,0 +1,3 @@
+## 2026-08-15 - [Memoize Map Markers and List Items]
+**Learning:** In react-leaflet, inline objects/functions passed to props like eventHandlers or deeply nested children create new object references on every render, causing severe DOM thrashing. Storing expensive dynamically generated Leaflet objects (like L.divIcon) in an external Map, along with proper memoization of React components, drastically improves performance.
+**Action:** When working with react-leaflet, extract the map element into a memoized component. Memoize the handlers passed to it using useMemo and cache any dynamically generated map elements using an external Map cache to avoid the Rules of Hooks violations while avoiding repetitive generation.

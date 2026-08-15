@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? 'none'}`;
+  if (pinCache.has(key)) {
+    return pinCache.get(key)!;
+  }
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -95,6 +103,31 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   list.forEach((a, i) => out[Math.floor(i / perDay)].push(a));
   return out.filter((d) => d.length > 0);
 }
+
+
+const MemoizedMarker = memo(function MemoizedMarker({
+  a,
+  lang,
+  icon,
+  onPick,
+}: {
+  a: Attraction;
+  lang: Lang;
+  icon: L.DivIcon;
+  onPick: (a: Attraction) => void;
+}) {
+  const eventHandlers = useMemo(() => ({ click: () => onPick(a) }), [a, onPick]);
+  return (
+    <Marker position={[a.lat, a.lng]} icon={icon} eventHandlers={eventHandlers}>
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => {
@@ -222,16 +255,16 @@ export default function App() {
     return () => { cancelled = true; };
   }, [tripAttractions]);
 
-  const onPick = (a: Attraction) => {
+  const onPick = useCallback((a: Attraction) => {
     setSelected(a);
     setFlyTarget([a.lat, a.lng]);
-  };
+  }, []);
 
-  const toggleTrip = (id: string) => {
+  const toggleTrip = useCallback((id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
-  };
+  }, []);
 
-  const moveTrip = (id: string, d: -1 | 1) => {
+  const moveTrip = useCallback((id: string, d: -1 | 1) => {
     setTripIds((c) => {
       const i = c.indexOf(id);
       if (i < 0) return c;
@@ -241,7 +274,7 @@ export default function App() {
       [copy[i], copy[j]] = [copy[j], copy[i]];
       return copy;
     });
-  };
+  }, []);
 
   const importTrip = (ids: string[]) => {
     setTripIds(ids);
@@ -532,23 +565,17 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MemoizedMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
+                  a={a}
+                  lang={lang}
                   icon={makePin(
                     REGION_COLORS[a.region],
                     tripIds.includes(a.id),
                     tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
                   )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  onPick={onPick}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
@@ -645,7 +672,7 @@ interface CardProps {
   stepNum?: number;
   onMove?: (d: -1 | 1) => void;
 }
-function AttractionCard({
+const AttractionCard = memo(function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
   return (
@@ -686,4 +713,4 @@ function AttractionCard({
       </div>
     </div>
   );
-}
+});
