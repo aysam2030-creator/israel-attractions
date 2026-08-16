@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -30,6 +30,15 @@ function makePin(color: string, isTrip: boolean, step?: number) {
   });
 }
 
+const pinCache = new Map<string, L.DivIcon>();
+function getCachedPin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  if (!pinCache.has(key)) {
+    pinCache.set(key, makePin(color, isTrip, step));
+  }
+  return pinCache.get(key)!;
+}
+
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
   center: "#a78bfa",
@@ -38,6 +47,8 @@ const REGION_COLORS: Record<Region, string> = {
   deadsea: "#60a5fa",
   south: "#f472b6",
 };
+
+const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 
 const ALL_REGIONS: Region[] = ["north", "center", "jerusalem", "coast", "deadsea", "south"];
 const ALL_CATEGORIES: Category[] = ["nature", "history", "religious", "beach", "city", "museum", "family"];
@@ -222,10 +233,10 @@ export default function App() {
     return () => { cancelled = true; };
   }, [tripAttractions]);
 
-  const onPick = (a: Attraction) => {
+  const onPick = useCallback((a: Attraction) => {
     setSelected(a);
     setFlyTarget([a.lat, a.lng]);
-  };
+  }, []);
 
   const toggleTrip = (id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
@@ -532,28 +543,22 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <AttractionMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
+                  a={a}
+                  lang={lang}
+                  icon={getCachedPin(
                     REGION_COLORS[a.region],
                     tripIds.includes(a.id),
                     tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
                   )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  onPick={onPick}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
                   positions={tripPath}
-                  pathOptions={{ color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" }}
+                  pathOptions={TRIP_PATH_OPTIONS}
                 />
               )}
               <FlyTo target={flyTarget} />
@@ -687,3 +692,23 @@ function AttractionCard({
     </div>
   );
 }
+
+interface AttractionMarkerProps {
+  a: Attraction;
+  lang: Lang;
+  icon: L.DivIcon;
+  onPick: (a: Attraction) => void;
+}
+const AttractionMarker = memo(function AttractionMarker({ a, lang, icon, onPick }: AttractionMarkerProps) {
+  const handlers = useMemo(() => ({ click: () => onPick(a) }), [a, onPick]);
+  return (
+    <Marker position={[a.lat, a.lng]} icon={icon} eventHandlers={handlers}>
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
