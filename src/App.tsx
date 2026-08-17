@@ -19,6 +19,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache dynamically generated icons to prevent Leaflet from destroying and recreating DOM nodes on re-renders
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -106,6 +107,7 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
 const TRIP_PATH_OPTIONS = { color: "#a78bfa", weight: 4, opacity: 0.85, dashArray: "8 8" };
 const DEFAULT_CENTER: [number, number] = [31.5, 34.9];
 
+// Memoize markers and eventHandlers to prevent Leaflet from unbinding/rebinding events and causing DOM thrashing
 const MemoizedMarker = memo(function MemoizedMarker({
   a,
   lang,
