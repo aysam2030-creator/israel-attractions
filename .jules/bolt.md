@@ -1,0 +1,3 @@
+## 2024-05-24 - React-Leaflet object ref caching
+**Learning:** Passing inline functions or objects (like `L.divIcon` via `makePin` or inline `eventHandlers`) inside a `.map()` block for react-leaflet markers creates new object references on every render. This forces Leaflet to destroy and recreate DOM elements, which is a massive performance bottleneck resulting in DOM thrashing. We can use a `Map` cache and extract the marker component or memoize the objects to fix this.
+**Action:** Extract list items/markers into `memo()` wrapped components, OR use a custom caching mechanism like a `Map` for objects like `L.divIcon` if they rely on stringifiable attributes, avoiding recreation on every render.
