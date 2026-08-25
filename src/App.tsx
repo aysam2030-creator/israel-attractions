@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon instances to prevent recreating them on every render
+// This prevents react-leaflet from destroying and recreating DOM elements (DOM thrashing)
 const iconCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -47,6 +49,10 @@ const REGION_COLORS: Record<Region, string> = {
   south: "#f472b6",
 };
 
+// ⚡ Bolt: Extracted Marker to a memoized component.
+// Passing an inline function like `eventHandlers={{ click: () => setSelected(a) }}` inside
+// a map loop previously caused continuous Marker re-renders. We now pass the stable
+// `setSelected` reference as a prop and handle the closure internally to bypass this.
 const AttractionMarker = memo(({
   a,
   isTrip,
