@@ -1,0 +1,3 @@
+## 2024-11-20 - React Leaflet Map Renders
+**Learning:** React-Leaflet components (like `<Marker>` and `<Polyline>`) trigger expensive internal Leaflet DOM redraws if non-primitive props (like arrays, objects, or inline functions) lose referential equality across React renders. Uncached `L.divIcon` generation inside render loops also drastically tanks performance by constantly recreating DOM nodes and parsing HTML strings.
+**Action:** Always extract Leaflet elements inside loops into memoized React components to prevent inline event handlers from breaking prop equality. Additionally, cache generated `L.divIcon` instances using a `Map` outside the component, and memoize path arrays and options objects to maintain stable references.
