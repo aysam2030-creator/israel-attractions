@@ -22,14 +22,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "21"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -88,6 +88,9 @@ jobs:
           ls -la android/app/src/main/assets/public | head -10
           echo "--- config:"
           cat android/app/src/main/assets/capacitor.config.json
+
+      - name: Sync Capacitor Android plugins
+        run: npx cap sync android
 
       - name: Make gradlew executable
         working-directory: android
