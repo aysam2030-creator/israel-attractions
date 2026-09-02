@@ -1,0 +1,3 @@
+## 2024-09-02 - React-Leaflet Marker DOM Thrashing Fix
+**Learning:** In `react-leaflet`, passing dynamically created `L.divIcon` instances directly to `icon={}` inside a `.map()` render loop forces Leaflet to destroy and recreate DOM elements on every single render cycle, creating a severe performance bottleneck for large map lists.
+**Action:** Extract the `L.divIcon` creation into an external cache (e.g. `new Map<string, L.DivIcon>()`) based on primitive stringified arguments. Combine this with wrapping the `<Marker>` component in `React.memo` (passing only evaluated primitives and stable function references as props) to effectively halt unnecessary Leaflet DOM re-rendering.
