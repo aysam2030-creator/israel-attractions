@@ -1,0 +1,3 @@
+## 2024-09-04 - React-Leaflet Marker Optimization
+**Learning:** Rendering `<Marker>` components inside a loop with inline objects/functions (like `eventHandlers={{ click: () => ... }}`) causes React-Leaflet to tear down and recreate Leaflet elements on every render, leading to significant DOM thrashing and lag when interacting with large datasets on the map.
+**Action:** Extract Leaflet elements rendered in lists into their own memoized components. Additionally, cache dynamically generated Leaflet configuration objects (like `L.divIcon`) using an external `Map` keyed by arguments to ensure reference stability.
