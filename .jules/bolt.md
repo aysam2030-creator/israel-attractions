@@ -1,0 +1,3 @@
+## 2024-03-24 - React-Leaflet Marker Caching Pattern
+**Learning:** In `react-leaflet`, passing inline objects to `eventHandlers` (e.g., `eventHandlers={{ click: handler }}`) directly inside a map loop causes unnecessary React re-renders and Leaflet DOM updates. Furthermore, dynamically generating Leaflet icons (like `L.divIcon`) directly inside render loops creates massive DOM overhead because Leaflet builds raw HTML strings into DOM elements every time.
+**Action:** Extract Leaflet primitive components (like `<Marker>`) into their own isolated, `React.memo`-wrapped components, and cache dynamically generated objects (like `L.divIcon`) in an external Map keyed by stringified deterministic properties to avoid DOM thrashing and React reconciliation overhead.
