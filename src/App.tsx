@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -28,6 +28,17 @@ function makePin(color: string, isTrip: boolean, step?: number) {
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+}
+
+const pinCache = new Map<string, L.DivIcon>();
+function getPin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  let icon = pinCache.get(key);
+  if (!icon) {
+    icon = makePin(color, isTrip, step);
+    pinCache.set(key, icon);
+  }
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -532,23 +543,14 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <AttractionMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  onSelect={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
@@ -645,6 +647,34 @@ interface CardProps {
   stepNum?: number;
   onMove?: (d: -1 | 1) => void;
 }
+interface MarkerProps {
+  a: Attraction;
+  lang: Lang;
+  isTrip: boolean;
+  step?: number;
+  onSelect: (a: Attraction) => void;
+}
+
+const AttractionMarker = memo(function AttractionMarker({ a, lang, isTrip, step, onSelect }: MarkerProps) {
+  const eventHandlers = useMemo(() => ({ click: () => onSelect(a) }), [a, onSelect]);
+  const icon = useMemo(() => getPin(REGION_COLORS[a.region], isTrip, step), [a.region, isTrip, step]);
+
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={icon}
+      eventHandlers={eventHandlers}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
+
 function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
