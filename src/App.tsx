@@ -19,6 +19,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache generated icons to prevent expensive object creation on every render
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -104,6 +105,7 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   return out.filter((d) => d.length > 0);
 }
 
+// Memoize the marker to prevent React/Leaflet from recreating the DOM node unnecessarily
 const MemoizedMarker = memo(({
   attraction,
   color,
