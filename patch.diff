@@ -1,0 +1,15 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -20,6 +20,7 @@
+ });
+
++// Cache generated icons to prevent expensive object creation on every render
+ const pinCache = new Map<string, L.DivIcon>();
+
+ function makePin(color: string, isTrip: boolean, step?: number) {
+@@ -105,6 +106,7 @@
+ }
+
++// Memoize the marker to prevent React/Leaflet from recreating the DOM node unnecessarily
+ const MemoizedMarker = memo(({
+   attraction,

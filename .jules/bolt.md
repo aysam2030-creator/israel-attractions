@@ -1,0 +1,3 @@
+## 2024-05-15 - [react-leaflet event handlers optimization]
+**Learning:** In react-leaflet, passing inline objects or functions to the `eventHandlers` prop (e.g., `eventHandlers={{ click: handler }}`) inside loops creates new object references on every render, leading to unnecessary DOM updates. To optimize this, extract the Leaflet element (like `<Marker>`) into its own memoized component. Also, dynamically generating `L.divIcon` objects inside the loop creates new objects every render. This can be optimized by caching the `L.DivIcon` instances based on their dynamic parameters using an external `Map`.
+**Action:** Extract list items to memoized components, and memoize or cache objects passed to props like `icon` or `eventHandlers`.
