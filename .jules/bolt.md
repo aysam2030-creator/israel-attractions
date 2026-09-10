@@ -1,0 +1,6 @@
+## 2024-03-24 - React.memo on AttractionCard
+**Learning:** `AttractionCard` is rendered in a list for the `visibleList` array (which can be quite long, e.g. when displaying all attractions in the "explore" tab). Every time `App` re-renders (e.g. from typing in the search bar, toggling a filter, moving the map, or clicking an item), all `AttractionCard` components re-render unless memoized.
+**Action:** Wrap `AttractionCard` in `React.memo` and ensure that the props passed to it are primitive values or stable references where possible.
+## 2024-03-24 - React.memo on Marker
+**Learning:** In `<MapContainer>`, `mapAttractions.map` creates `<Marker>` components for every item. Inside it passes `eventHandlers={{ click: () => setSelected(a) }}` and calls `makePin(...)` inline. This creates a new event handler function and a new `L.divIcon` on every render for every single item on the map, breaking memoization if Leaflet components were to try bailing out, and causing unnecessary work on every render.
+**Action:** Extract the `<Marker>` rendering logic into a `MemoMarker` component (or memoized component) and pass the bare minimum stable props (like `a`, `tripIds.includes(a.id)`, `index` if in trip, and `setSelected` which is stable).

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -58,6 +58,35 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   }, [target, map]);
   return null;
 }
+
+const MemoMarker = memo(function MemoMarker({
+  a,
+  isTrip,
+  step,
+  lang,
+  setSelected,
+}: {
+  a: Attraction;
+  isTrip: boolean;
+  step?: number;
+  lang: Lang;
+  setSelected: (a: Attraction) => void;
+}) {
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={makePin(REGION_COLORS[a.region], isTrip, step)}
+      eventHandlers={{ click: () => setSelected(a) }}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 type Tab = "explore" | "trip" | "chat";
 
@@ -532,23 +561,14 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MemoMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  lang={lang}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
@@ -645,7 +665,7 @@ interface CardProps {
   stepNum?: number;
   onMove?: (d: -1 | 1) => void;
 }
-function AttractionCard({
+const AttractionCard = memo(function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
   return (
@@ -686,4 +706,4 @@ function AttractionCard({
       </div>
     </div>
   );
-}
+});
