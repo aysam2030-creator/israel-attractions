@@ -19,6 +19,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon instances to prevent Leaflet memory leaks and DOM thrashing
 const pinCache = new Map<string, L.DivIcon>();
 function makePin(color: string, isTrip: boolean, step?: number) {
   const key = `${color}-${isTrip}-${step}`;
@@ -638,8 +639,10 @@ interface MapMarkerProps {
   lang: Lang;
 }
 
+// ⚡ Bolt: Extracted Marker into a React.memo component to prevent map re-renders on unrelated state changes
 const MapMarker = memo(function MapMarker({ a, isTrip, step, setSelected, lang }: MapMarkerProps) {
   const icon = makePin(REGION_COLORS[a.region], isTrip, step);
+  // ⚡ Bolt: Memoize the eventHandlers object to maintain stable references and avoid re-attaching event listeners
   const handlers = useMemo(() => ({ click: () => setSelected(a) }), [setSelected, a]);
   return (
     <Marker position={[a.lat, a.lng]} icon={icon} eventHandlers={handlers}>
