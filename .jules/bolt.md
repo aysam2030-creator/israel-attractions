@@ -1,0 +1,3 @@
+## 2024-10-27 - Map Marker Re-render Optimization
+**Learning:** In React-Leaflet, inline `eventHandlers` objects inside `Marker` render loops cause the components to receive new object references on every render cycle, completely bypassing React reconciliation optimizations. Furthermore, dynamically constructing Leaflet instances via `L.divIcon` on every render creates massive memory churn and DOM thrashing.
+**Action:** Always extract React-Leaflet elements inside lists into standalone components wrapped in `React.memo()`. Pass stable primitive types and state setters directly as props. Cache dynamically generated Leaflet objects (like custom Map icons) in an external `Map` keyed by their state permutations to reuse instances across renders.
