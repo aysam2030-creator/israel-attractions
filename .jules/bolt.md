@@ -1,0 +1,3 @@
+## 2024-06-19 - React-Leaflet Marker Thrashing
+**Learning:** In `react-leaflet`, passing inline objects to `eventHandlers` (e.g. `eventHandlers={{ click: () => setSelected(a) }}`) inside a `.map` loop creates new object references on every render. Combined with dynamic `L.divIcon` creation, this causes massive DOM thrashing and memory bloat on every App state change.
+**Action:** Always extract Leaflet elements like `<Marker>` into their own `memo`-ized components, pass stable props (like raw state setters), and externally cache `L.DivIcon` instances using a `Map` keyed by their dynamic properties.
