@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -29,6 +29,49 @@ function makePin(color: string, isTrip: boolean, step?: number) {
     popupAnchor: [0, -32],
   });
 }
+
+// ⚡ Bolt: Cache L.DivIcon instances to prevent Leaflet from thrashing the DOM with new icons on every render.
+const pinCache = new Map<string, L.DivIcon>();
+function getCachedPin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? ""}`;
+  if (!pinCache.has(key)) {
+    pinCache.set(key, makePin(color, isTrip, step));
+  }
+  return pinCache.get(key)!;
+}
+
+// ⚡ Bolt: Memoize the Marker component to prevent re-rendering all map markers when App state (like `tab` or `search`) changes.
+// Reduces re-renders significantly since `setSelected` is stable.
+const MemoizedMarker = memo(({
+  a,
+  lang,
+  isTrip,
+  step,
+  color,
+  setSelected
+}: {
+  a: Attraction,
+  lang: Lang,
+  isTrip: boolean,
+  step?: number,
+  color: string,
+  setSelected: (a: Attraction) => void
+}) => {
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={getCachedPin(color, isTrip, step)}
+      eventHandlers={{ click: () => setSelected(a) }}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -532,23 +575,15 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MemoizedMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  color={REGION_COLORS[a.region]}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
