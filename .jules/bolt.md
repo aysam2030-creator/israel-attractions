@@ -1,0 +1,3 @@
+## 2025-02-12 - Memoizing Leaflet Markers Inside Lists
+**Learning:** Passing inline objects or functions (like `eventHandlers={{ click: () => setSelected(a) }}`) to `<Marker>` inside a large map loop creates new object references on every render. This completely breaks React memoization and causes unnecessary DOM updates for every marker when unrelated state changes.
+**Action:** Extract the Leaflet element into its own memoized component (`MemoizedMarker`) and ensure the parent passes stable references (e.g., passing the raw state setter `setSelected` directly) rather than inline arrow functions. Additionally, if dynamically generating custom icons inside the render loop, cache them in an external `Map` to prevent recreating `L.divIcon` instances on every render.
