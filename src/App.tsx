@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,16 +19,61 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt Performance Optimization:
+// Cache L.divIcon instances to prevent creating new object references on every render,
+// avoiding hook violations and preventing DOM thrashing in react-leaflet.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
-  const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
-    className: "custom-pin",
-    html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 34],
-    popupAnchor: [0, -32],
-  });
+  const key = `${color}-${isTrip}-${step ?? "none"}`;
+  if (!pinCache.has(key)) {
+    const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
+    const icon = L.divIcon({
+      className: "custom-pin",
+      html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 34],
+      popupAnchor: [0, -32],
+    });
+    pinCache.set(key, icon);
+  }
+  return pinCache.get(key)!;
 }
+
+// ⚡ Bolt Performance Optimization:
+// Extract the Marker into a memoized component to prevent re-rendering all map markers
+// when the parent App state changes, particularly when passing functions to eventHandlers
+// inside loops which creates new object references on every render.
+const MemoizedMarker = memo(({
+  attraction,
+  lang,
+  color,
+  isTrip,
+  step,
+  setSelected
+}: {
+  attraction: Attraction;
+  lang: Lang;
+  color: string;
+  isTrip: boolean;
+  step?: number;
+  setSelected: (a: Attraction) => void;
+}) => {
+  return (
+    <Marker
+      position={[attraction.lat, attraction.lng]}
+      icon={makePin(color, isTrip, step)}
+      eventHandlers={{ click: () => setSelected(attraction) }}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{attraction.name[lang]}</strong>
+          <div className="popup-city">{attraction.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -532,23 +577,15 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MemoizedMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  attraction={a}
+                  lang={lang}
+                  color={REGION_COLORS[a.region]}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
