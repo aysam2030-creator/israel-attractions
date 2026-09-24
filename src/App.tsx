@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt Optimization: Cache Leaflet divIcon generation to avoid recreating
+// expensive DOM element templates on every map render loop.
 const pinCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -104,6 +106,9 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   return out.filter((d) => d.length > 0);
 }
 
+// ⚡ Bolt Optimization: Extracted Marker into a memoized component.
+// This prevents Leaflet from detaching and reattaching event listeners
+// causing massive DOM thrashing when the parent component re-renders.
 const MemoizedMarker = memo(({ a, lang, isTrip, stepNum, color, setSelected }: { a: Attraction; lang: Lang; isTrip: boolean; stepNum?: number; color: string; setSelected: (a: Attraction) => void }) => {
   return (
     <Marker
