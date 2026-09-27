@@ -1,0 +1,3 @@
+## 2024-05-14 - [Cache Leaflet Elements Generated Inside Render Loops]
+**Learning:** Recreating objects like `L.divIcon` on every React render (such as inside a loop over data) causes severe DOM thrashing in Leaflet components because the references change on every cycle, preventing shallow comparison bailouts. Additionally, inline event handlers in lists also create new function references on every render.
+**Action:** Extract list items (like `<Marker>`) into their own memoized React components (`React.memo`) passing simple primitives or stable callback references. Use an external `Map` to cache dynamically generated library objects (like `L.divIcon`) based on their parameter footprint to prevent object recreation.
