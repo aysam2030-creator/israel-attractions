@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt Performance Optimization: Cache map pins
+// Recreating L.divIcon inside render loops causes Leaflet to thrash the DOM.
+// Using a composite key to cache them reduces memory and map stutter.
+const pinCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? 'none'}`;
+  if (pinCache.has(key)) return pinCache.get(key)!;
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  pinCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -532,23 +542,15 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MapMarker
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  color={REGION_COLORS[a.region]}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  lang={lang}
+                  setSelected={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
@@ -632,6 +634,37 @@ export default function App() {
     </div>
   );
 }
+
+interface MapMarkerProps {
+  a: Attraction;
+  color: string;
+  isTrip: boolean;
+  step?: number;
+  lang: Lang;
+  setSelected: (a: Attraction | null) => void;
+}
+
+// ⚡ Bolt Performance Optimization: Memoized Map Marker
+// Extracting the marker into a memoized component prevents it from re-rendering
+// when other parts of the App state change, avoiding unnecessary Leaflet object creation.
+const MapMarker = memo(function MapMarker({
+  a, color, isTrip, step, lang, setSelected
+}: MapMarkerProps) {
+  return (
+    <Marker
+      position={[a.lat, a.lng]}
+      icon={makePin(color, isTrip, step)}
+      eventHandlers={{ click: () => setSelected(a) }}
+    >
+      <Popup>
+        <div className="popup">
+          <strong>{a.name[lang]}</strong>
+          <div className="popup-city">{a.city[lang]}</div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+});
 
 interface CardProps {
   a: Attraction;
