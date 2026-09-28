@@ -1,0 +1,3 @@
+## 2024-05-24 - React-Leaflet MapMarker Re-renders
+**Learning:** Recreating `L.divIcon` objects inline and passing anonymous functions to `eventHandlers` inside loops causes react-leaflet's `<Marker>` components to unmount and remount or heavily update on every parent re-render, leading to DOM thrashing. React.memo() alone cannot save `<Marker>` if its props keep changing references.
+**Action:** Always extract react-leaflet primitives (like `<Marker>`) inside loops into their own memoized component. Use an external `Map` to cache dynamic Leaflet objects like `L.divIcon` based on a composite key, and ensure event handlers passed to Leaflet use stable references or `useMemo`.
