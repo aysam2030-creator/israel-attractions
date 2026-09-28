@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// ⚡ Bolt: Cache L.divIcon instances to prevent react-leaflet from recreating DOM nodes on every render.
+// Impact: Reduces main thread blocking time during filtering/search by recycling SVG/DOM nodes.
 const pinCache = new Map<string, L.DivIcon>();
 function makePin(color: string, isTrip: boolean, step?: number) {
   const key = `${color}-${isTrip}-${step}`;
@@ -102,6 +104,8 @@ function splitByDays(list: Attraction[], days: number): Attraction[][] {
   return out.filter((d) => d.length > 0);
 }
 
+// ⚡ Bolt: Extract Leaflet markers into a memoized component using flat primitive props to bail out of re-renders.
+// Impact: Prevents unnecessary react-leaflet component unmounting and remounting when unrelated parent state changes.
 const MapMarker = memo(({
   a,
   lang,
