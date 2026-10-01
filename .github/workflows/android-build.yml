@@ -22,19 +22,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "21"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-36 build-tools;36.0.0 platform-tools tools"
+          packages: "platforms;android-36 build-tools;36.0.0 platform-tools"
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
@@ -46,12 +46,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund || (sleep 10 && npm install --no-audit --no-fund) || (sleep 20 && npm install --no-audit --no-fund)
           echo "--- installed Capacitor:"
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
       - name: Build web bundle
         run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Stage web bundle into Android assets
         run: |
