@@ -46,7 +46,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund || (sleep 10 && npm install --no-audit --no-fund) || (sleep 20 && npm install --no-audit --no-fund)
           echo "--- installed Capacitor:"
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
