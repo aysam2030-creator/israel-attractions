@@ -1,0 +1,3 @@
+## 2024-10-01 - Prevent react-leaflet DOM Thrashing
+**Learning:** Passing inline objects or functions to the `eventHandlers` prop (e.g., `eventHandlers={{ click: () => setSelected(a) }}`) inside loops creates new object references on every render, leading to `react-leaflet` unnecessarily updating and recreating identical icon DOM elements.
+**Action:** Always extract Leaflet elements (like `<Marker>`) into their own memoized component (`React.memo`) and cache the `eventHandlers` object using `useMemo` based on stable props to prevent this thrashing. Additionally, cache generated `L.divIcon` objects in an external `Map` based on a composite key rather than recreating them per marker per render.
