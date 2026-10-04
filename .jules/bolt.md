@@ -1,0 +1,3 @@
+## 2024-10-04 - Caching dynamically generated objects like `L.divIcon`
+**Learning:** In react-leaflet, passing inline objects or functions to the `eventHandlers` prop (e.g., `eventHandlers={{ click: handler }}`) inside loops creates new object references on every render, leading to unnecessary DOM updates. And creating dynamic L.divIcon instances on every render inside a loop is expensive.
+**Action:** Extract the Leaflet element (like `<Marker>`) into its own memoized component. Cache dynamically generated objects like `L.divIcon` instances using an external `Map` based on a composite key of their parameters, rather than recreating them on every component render inside a loop.
