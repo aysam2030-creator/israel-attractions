@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { attractions, type Attraction, type Category, type Region } from "./data/attractions";
@@ -8,6 +8,7 @@ import { distanceKm, totalRouteDistance } from "./utils";
 import Chat from "./Chat";
 import { setupStatusBar, getCurrentPosition, nativeShare, IS_NATIVE } from "./native";
 import "./App.css";
+import { MapPin } from "./MapPin";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -19,16 +20,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-function makePin(color: string, isTrip: boolean, step?: number) {
-  const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
-    className: "custom-pin",
-    html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 34],
-    popupAnchor: [0, -32],
-  });
-}
 
 const REGION_COLORS: Record<Region, string> = {
   north: "#22d3ee",
@@ -532,23 +523,15 @@ export default function App() {
                 className="map-tiles"
               />
               {mapAttractions.map((a) => (
-                <Marker
+                <MapPin
                   key={a.id}
-                  position={[a.lat, a.lng]}
-                  icon={makePin(
-                    REGION_COLORS[a.region],
-                    tripIds.includes(a.id),
-                    tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined
-                  )}
-                  eventHandlers={{ click: () => setSelected(a) }}
-                >
-                  <Popup>
-                    <div className="popup">
-                      <strong>{a.name[lang]}</strong>
-                      <div className="popup-city">{a.city[lang]}</div>
-                    </div>
-                  </Popup>
-                </Marker>
+                  a={a}
+                  lang={lang}
+                  isTrip={tripIds.includes(a.id)}
+                  step={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
+                  color={REGION_COLORS[a.region]}
+                  onSelect={setSelected}
+                />
               ))}
               {tab === "trip" && tripPath.length > 1 && (
                 <Polyline
