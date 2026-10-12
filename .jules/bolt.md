@@ -1,0 +1,3 @@
+## 2024-10-12 - Prevent Leaflet Map Thrashing with Memoized Icons
+**Learning:** `react-leaflet` can cause severe DOM thrashing and memory churn if dynamically generated objects like `L.divIcon` are passed directly as props to `<Marker>` inside a loop. Since React compares object references, creating a new `L.divIcon` on every render forces Leaflet to continually destroy and recreate DOM elements on the map.
+**Action:** When dynamically generating complex configuration objects (like Leaflet icons) that are used in tight render loops, always cache the instances externally using a `Map` with a composite key representing the dynamic arguments. This stabilizes the object reference passed to `react-leaflet` and prevents unnecessary DOM updates.
