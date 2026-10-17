@@ -51,7 +51,7 @@ jobs:
           npm ls @capacitor/cli @capacitor/core @capacitor/android || true
 
       - name: Build web bundle
-        run: npm run build
+        run: npm run build && npx cap sync android
 
       - name: Stage web bundle into Android assets
         run: |
