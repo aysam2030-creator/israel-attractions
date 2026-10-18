@@ -1,0 +1,3 @@
+## 2024-10-18 - [Optimizing Map Pins in react-leaflet]
+**Learning:** The application recreates `L.divIcon` instances for every marker on every render, which causes significant DOM thrashing and performance degradation, especially when many markers are displayed on the map.
+**Action:** To optimize performance and prevent DOM thrashing in react-leaflet, cache dynamically generated objects like `L.divIcon` instances using an external `Map` based on a composite key of their parameters, rather than recreating them on every component render inside a loop.
