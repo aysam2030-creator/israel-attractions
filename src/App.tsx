@@ -19,6 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Cache Map to prevent recreating L.divIcon objects on every render
+// This prevents severe DOM thrashing and performance degradation in react-leaflet
 const iconCache = new Map<string, L.DivIcon>();
 
 function makePin(color: string, isTrip: boolean, step?: number) {
@@ -652,6 +654,7 @@ interface CardProps {
   stepNum?: number;
   onMove?: (id: string, d: -1 | 1) => void;
 }
+// Memoized to prevent O(N) list item re-renders when a single attraction's state changes
 const AttractionCard = memo(function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
