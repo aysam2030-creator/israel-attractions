@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -19,15 +19,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const iconCache = new Map<string, L.DivIcon>();
+
 function makePin(color: string, isTrip: boolean, step?: number) {
+  const key = `${color}-${isTrip}-${step ?? 'none'}`;
+  if (iconCache.has(key)) return iconCache.get(key)!;
+
   const stepHtml = step !== undefined ? `<div class="pin-step">${step}</div>` : "";
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-pin",
     html: `<div class="pin ${isTrip ? "pin-trip" : ""}" style="--pin:${color}"><div class="pin-inner"></div>${stepHtml}</div>`,
     iconSize: [28, 36],
     iconAnchor: [14, 34],
     popupAnchor: [0, -32],
   });
+  iconCache.set(key, icon);
+  return icon;
 }
 
 const REGION_COLORS: Record<Region, string> = {
@@ -222,16 +229,16 @@ export default function App() {
     return () => { cancelled = true; };
   }, [tripAttractions]);
 
-  const onPick = (a: Attraction) => {
+  const onPick = useCallback((a: Attraction) => {
     setSelected(a);
     setFlyTarget([a.lat, a.lng]);
-  };
+  }, []);
 
-  const toggleTrip = (id: string) => {
+  const toggleTrip = useCallback((id: string) => {
     setTripIds((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
-  };
+  }, []);
 
-  const moveTrip = (id: string, d: -1 | 1) => {
+  const moveTrip = useCallback((id: string, d: -1 | 1) => {
     setTripIds((c) => {
       const i = c.indexOf(id);
       if (i < 0) return c;
@@ -241,7 +248,7 @@ export default function App() {
       [copy[i], copy[j]] = [copy[j], copy[i]];
       return copy;
     });
-  };
+  }, []);
 
   const importTrip = (ids: string[]) => {
     setTripIds(ids);
@@ -496,12 +503,12 @@ export default function App() {
                           T={T}
                           lang={lang}
                           isSelected={selected?.id === a.id}
-                          onPick={() => onPick(a)}
+                          onPick={onPick}
                           isInTrip={tripIds.includes(a.id)}
-                          onToggleTrip={() => toggleTrip(a.id)}
+                          onToggleTrip={toggleTrip}
                           tab={tab}
                           stepNum={tripIds.indexOf(a.id) + 1}
-                          onMove={(d) => moveTrip(a.id, d)}
+                          onMove={moveTrip}
                         />
                       ))}
                     </div>
@@ -513,12 +520,12 @@ export default function App() {
                       T={T}
                       lang={lang}
                       isSelected={selected?.id === a.id}
-                      onPick={() => onPick(a)}
+                      onPick={onPick}
                       isInTrip={tripIds.includes(a.id)}
-                      onToggleTrip={() => toggleTrip(a.id)}
+                      onToggleTrip={toggleTrip}
                       tab={tab}
                       stepNum={tab === "trip" ? tripIds.indexOf(a.id) + 1 : undefined}
-                      onMove={(d) => moveTrip(a.id, d)}
+                      onMove={moveTrip}
                     />
                   ))}
             </div>
@@ -638,18 +645,18 @@ interface CardProps {
   T: Strings;
   lang: Lang;
   isSelected: boolean;
-  onPick: () => void;
+  onPick: (a: Attraction) => void;
   isInTrip: boolean;
-  onToggleTrip: () => void;
+  onToggleTrip: (id: string) => void;
   tab: Tab;
   stepNum?: number;
-  onMove?: (d: -1 | 1) => void;
+  onMove?: (id: string, d: -1 | 1) => void;
 }
-function AttractionCard({
+const AttractionCard = memo(function AttractionCard({
   a, T, lang, isSelected, onPick, isInTrip, onToggleTrip, tab, stepNum, onMove,
 }: CardProps) {
   return (
-    <div className={"card" + (isSelected ? " active" : "")} onClick={onPick}>
+    <div className={"card" + (isSelected ? " active" : "")} onClick={() => onPick(a)}>
       {tab === "trip" && stepNum && stepNum > 0 && (
         <div className="card-step">{stepNum}</div>
       )}
@@ -657,7 +664,7 @@ function AttractionCard({
         <div className="card-img-overlay" />
         <button
           className={"fav-btn" + (isInTrip ? " fav-on" : "")}
-          onClick={(e) => { e.stopPropagation(); onToggleTrip(); }}
+          onClick={(e) => { e.stopPropagation(); onToggleTrip(a.id); }}
         >
           {isInTrip ? "★" : "☆"}
         </button>
@@ -678,12 +685,12 @@ function AttractionCard({
         </div>
         {tab === "trip" && onMove && (
           <div className="trip-actions" onClick={(e) => e.stopPropagation()}>
-            <button className="trip-mini" onClick={() => onMove(-1)}>↑</button>
-            <button className="trip-mini" onClick={() => onMove(1)}>↓</button>
-            <button className="trip-mini trip-remove" onClick={onToggleTrip}>🗑</button>
+            <button className="trip-mini" onClick={() => onMove(a.id, -1)}>↑</button>
+            <button className="trip-mini" onClick={() => onMove(a.id, 1)}>↓</button>
+            <button className="trip-mini trip-remove" onClick={() => onToggleTrip(a.id)}>🗑</button>
           </div>
         )}
       </div>
     </div>
   );
-}
+});
