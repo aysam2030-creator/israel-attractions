@@ -1,0 +1,3 @@
+## 2024-10-24 - React-Leaflet DivIcon DOM Thrashing
+**Learning:** In react-leaflet, re-creating `L.divIcon` instances on every render inside map loops defeats the library's internal memoization because the icon reference constantly changes. This causes React-Leaflet to unnecessarily re-render and re-mount DOM nodes for every marker on the map during any state update (e.g., changing active tabs or dragging the map).
+**Action:** When working with dynamically styled `L.divIcon` instances (like markers with changing colors or trip numbers), always extract a caching mechanism (like an external `Map` indexed by the dynamic properties) to return the same exact `L.DivIcon` object reference across renders for identical parameter combinations.
