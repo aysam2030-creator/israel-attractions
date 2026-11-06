@@ -1,3 +1,3 @@
-## 2024-11-06 - React-Leaflet L.divIcon Thrashing
-**Learning:** In react-leaflet, recreating `L.divIcon` instances on every render inside a loop breaks Leaflet's internal equality checks, causing expensive DOM thrashing as markers are destroyed and re-created continuously.
-**Action:** Cache dynamically generated `L.divIcon` objects outside the component (using an external `Map` and a composite key) to reuse instances and preserve react-leaflet performance.
+## 2024-11-06 - Capacitor 8 CI Workflow Issues
+**Learning:** Capacitor 8.x requires Node >= 22 and Java 21 for Android builds. Additionally, the native configuration generation (e.g., `cordova.variables.gradle`) must be run using `npx cap sync android` after building the web assets.
+**Action:** Update the GitHub Actions workflow to use Node 22, Java 21, and insert `npx cap sync android` after `npm run build`.
